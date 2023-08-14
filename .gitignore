@@ -3,3 +3,4 @@
 live*
 *.csv
 *.log
+.env
