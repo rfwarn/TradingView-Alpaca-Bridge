@@ -52,10 +52,7 @@ def respond():
   
 class AutomatedTrader:
   """ Class for  """
-  def __init__(self, api_key, secret_key, req):
-    self.req = req    
-    self.client = TradingClient(api_key, secret_key, paper=paper)
-    self.options = {
+  def __init__(self, api_key, secret_key, req, options={
   # Enable/disable shorting. Not fully implemented yet. 
   # Alert(s) needs to say short and you have to close any long positions first.
   "short": False,
@@ -86,7 +83,10 @@ class AutomatedTrader:
   "limitamt": 0.04,
   # limit percent for everything above a certain amount which is predefined for now below.
   "limitPerc": 0.0005
-}
+}):
+    self.options = options
+    self.client = TradingClient(api_key, secret_key, paper=True) 
+    self.req = req
     self.setData()
     self.setOrders()
     self.setPosition()
@@ -267,12 +267,13 @@ class AutomatedTrader:
   
   def cancelOrderById(self):
     if not self.options['enabled']:
-      logger.debug(f'Trading not enable, order not canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
-      return
+      value = f'Trading not enable, order not canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}'
+      logger.debug(value)
+      return value
     for x in self.options['orders']:
       self.client.cancel_order_by_id(x.id.hex)
-      logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
-      
+      return logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
+
 if __name__ == '__main__':
   # validate it's working. Just paper trading at the moment.
   print(TradingClient(API_KEY, SECRET_KEY, paper=paper).get_account())
