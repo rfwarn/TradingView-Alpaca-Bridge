@@ -62,7 +62,7 @@ market = {
 class TestAlpaca(unittest.TestCase):
   
   def test_failsafe(self):
-    # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default amount of funding to use which can cause real problems if not using a paper account.
+    # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
     optCopy = options.copy()
     optCopy['enabled'] = True
     optCopy['testMode'] = True
