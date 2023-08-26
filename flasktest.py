@@ -24,14 +24,17 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
-API_KEY = os.environ.get('Alpaca_API_KEY')
-SECRET_KEY = os.environ.get("Alpaca_SECRET_KEY")
-# paper = True
+paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
+'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
+'paper': True}
 
 # Real money trading
-# API_KEY = os.environ.get('Alpaca_API_KEY-real')
-# SECRET_KEY = os.environ.get("Alpaca_SECRET-real")
-# paper = False
+realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
+'secret_key': os.environ.get("Alpaca_SECRET-real"),
+'paper': False}
+
+# Point to the one you want to use.
+account = paperTrading
 
 app = Flask(__name__)
 
@@ -39,13 +42,31 @@ app = Flask(__name__)
   # LDC Kernel Bullish ▲ | CLSK@4.015 | (1)...
   # order sell | MSFT@337.57 | Directional Movement Index...
 
+def acctInfo():
+  temp = TradingClient(**account).get_account()
+  print(f'status: {temp.status}')
+  print(f'account blocked: {temp.account_blocked}')
+  print(f'trade_suspended_by_user: {temp.trade_suspended_by_user}')
+  print(f'trading_blocked: {temp.trading_blocked}')
+  print(f'transfers_blocked: {temp.transfers_blocked}')
+  print(f'equity: {temp.equity}')
+  print(f'currency: {temp.currency}')
+  print(f'cash: {temp.cash}')
+  print(f'buying_power: {temp.buying_power}')
+  print(f'daytrading_buying_power: {temp.daytrading_buying_power}')
+  print(f'shorting_enabled: {temp.shorting_enabled}')
+  print(f'crypto_status: {temp.crypto_status}')
+  # print(f'{temp.}')
+  # print(f'{temp.}')
+  # print(f'')
+
 @app.route('/', methods=['POST'])
 def respond():
     # print(request.data)
     
     req_data = str(request.data)
     logger.info(f'Recieved request with data: {req_data}')
-    trader = AutomatedTrader(API_KEY, SECRET_KEY, req_data)
+    trader = AutomatedTrader(**account, req=req_data)
     
     
     return Response(status=200)
@@ -53,7 +74,7 @@ def respond():
   
 class AutomatedTrader:
   """ Class for  """
-  def __init__(self, API_KEY, SECRET_KEY, req, paper=True, options={
+  def __init__(self, api_key, secret_key, paper=True, req='', options={
   # Enable/disable shorting. Not fully implemented yet. 
   # Alert(s) needs to say short and you have to close any long positions first.
   "short": False,
@@ -86,8 +107,10 @@ class AutomatedTrader:
   "limitPerc": 0.0005
 }):
     self.options = options
+    self.api_key = api_key
+    self.secret_key = secret_key
     self.paper = paper
-    # self.client = TradingClient(API_KEY, SECRET_KEY, paper=paper) 
+    # self.client = TradingClient(api_key, secret_key, paper=paper) 
     self.client = self.createClient()
     self.req = req
     if self.options['enabled']==True:
@@ -98,7 +121,7 @@ class AutomatedTrader:
       self.createOrder()
 
   def createClient(self):
-    return TradingClient(API_KEY, SECRET_KEY, paper=self.paper) 
+    return TradingClient(self.api_key, self.secret_key, paper=self.paper) 
 
   def createOrder(self):
     # Setting papameters for market order
@@ -285,6 +308,6 @@ class AutomatedTrader:
 
 if __name__ == '__main__':
   # validate it's working. Just paper trading at the moment.
-  print(TradingClient(API_KEY, SECRET_KEY, paper=paper).get_account())
+  acctInfo()
   app.run(port=5000, debug=False, threaded=True)
   

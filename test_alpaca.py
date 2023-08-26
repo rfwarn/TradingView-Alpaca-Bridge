@@ -2,12 +2,12 @@ import unittest
 from flasktest import AutomatedTrader
 import os
 
-paperTrading = {'API_KEY': os.environ.get('Alpaca_API_KEY'),
-'SECRET_KEY': os.environ.get("Alpaca_SECRET_KEY"),
+paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
+'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
 'paper': True}
 
-realTrading = {'API_KEY': os.environ.get('Alpaca_API_KEY-real'),
-'SECRET_KEY': os.environ.get("Alpaca_SECRET-real"),
+realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
+'secret_key': os.environ.get("Alpaca_SECRET-real"),
 'paper': False}
 
 options = {
@@ -65,13 +65,15 @@ class TestAlpaca(unittest.TestCase):
     result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
     account = result.client.get_account()
     self.assertFalse(account.account_blocked)
-    self.assertTrue(result.data['stock'], 'MSFT')
-    self.assertTrue(result.data['price'], '337.56')
+    self.assertFalse(account.trade_suspended_by_user)
+    self.assertFalse(account.trading_blocked)
+    self.assertFalse(account.transfers_blocked)
   def test_data1(self):
     options['enabled'] = False
     result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
     result.setData()
     self.assertEqual(result.data['action'], 'sell')
+    self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 337.57)
   def test_data2(self):
@@ -79,6 +81,7 @@ class TestAlpaca(unittest.TestCase):
     result = AutomatedTrader(**paperTrading, req=market['Bear'], options=options)
     result.setData()
     self.assertEqual(result.data['action'], 'Bear')
+    self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
   def test_data3(self):
@@ -86,6 +89,7 @@ class TestAlpaca(unittest.TestCase):
     result = AutomatedTrader(**paperTrading, req=market['Bull'], options=options)
     result.setData()
     self.assertEqual(result.data['action'], 'Bull')
+    self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
   def test_data4(self):
@@ -93,29 +97,33 @@ class TestAlpaca(unittest.TestCase):
     result = AutomatedTrader(**paperTrading, req=market['Open'], options=options)
     result.setData()
     self.assertEqual(result.data['action'], 'Open')
+    self.assertEqual(result.data['position'], 'Long')
     self.assertEqual(result.data['stock'], 'MSFT')
-    self.assertEqual(result.data['price'], 337.56)
+    self.assertEqual(result.data['price'], 327.3)
   def test_data5(self):
     options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Close'], options=options)
+    result = AutomatedTrader(**paperTrading, req=market['Long'], options=options)
     result.setData()
     self.assertEqual(result.data['action'], 'Close')
-    self.assertEqual(result.data['stock'], 'MSFT')
-    self.assertEqual(result.data['price'], 337.56)
+    self.assertEqual(result.data['position'], 'Long')
+    self.assertEqual(result.data['stock'], 'CLSK')
+    self.assertEqual(result.data['price'], 4.015)
   def test_data6(self):
     options['enabled'] = False
     result = AutomatedTrader(**paperTrading, req=market['Short'], options=options)
     result.setData()
-    self.assertEqual(result.data['action'], 'Short')
-    self.assertEqual(result.data['stock'], 'MSFT')
-    self.assertEqual(result.data['price'], 337.56)
+    self.assertEqual(result.data['action'], 'Open')
+    self.assertEqual(result.data['position'], 'Short')
+    self.assertEqual(result.data['stock'], 'CLSK')
+    self.assertEqual(result.data['price'], 4.015)
   def test_data7(self):
     options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Long'], options=options)
+    result = AutomatedTrader(**paperTrading, req=market['Close'], options=options)
     result.setData()
-    self.assertEqual(result.data['action'], 'sell')
-    self.assertEqual(result.data['stock'], 'MSFT')
-    self.assertEqual(result.data['price'], 337.56)
+    self.assertEqual(result.data['action'], 'Close')
+    self.assertEqual(result.data['position'], 'Short')
+    self.assertEqual(result.data['stock'], 'CLSK')
+    self.assertEqual(result.data['price'], 4.015)
   # def test_orders(self):
   #   self.result.setOrders()
 
