@@ -4,3 +4,8 @@ live*
 *.csv
 *.log
 .env
+*.pyc
+*.pyo
+__pycache__/
+build/
+dist/

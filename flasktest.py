@@ -26,7 +26,7 @@ logger.addHandler(handler)
 # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
 API_KEY = os.environ.get('Alpaca_API_KEY')
 SECRET_KEY = os.environ.get("Alpaca_SECRET_KEY")
-paper = True
+# paper = True
 
 # Real money trading
 # API_KEY = os.environ.get('Alpaca_API_KEY-real')
@@ -47,12 +47,13 @@ def respond():
     logger.info(f'Recieved request with data: {req_data}')
     trader = AutomatedTrader(API_KEY, SECRET_KEY, req_data)
     
+    
     return Response(status=200)
     # return "Hello World"
   
 class AutomatedTrader:
   """ Class for  """
-  def __init__(self, api_key, secret_key, req, options={
+  def __init__(self, API_KEY, SECRET_KEY, req, paper=True, options={
   # Enable/disable shorting. Not fully implemented yet. 
   # Alert(s) needs to say short and you have to close any long positions first.
   "short": False,
@@ -85,13 +86,19 @@ class AutomatedTrader:
   "limitPerc": 0.0005
 }):
     self.options = options
-    self.client = TradingClient(api_key, secret_key, paper=True) 
+    self.paper = paper
+    # self.client = TradingClient(API_KEY, SECRET_KEY, paper=paper) 
+    self.client = self.createClient()
     self.req = req
-    self.setData()
-    self.setOrders()
-    self.setPosition()
-    self.setBalance()
-    self.createOrder()
+    if self.options['enabled']==True:
+      self.setData()
+      self.setOrders()
+      self.setPosition()
+      self.setBalance()
+      self.createOrder()
+
+  def createClient(self):
+    return TradingClient(API_KEY, SECRET_KEY, paper=self.paper) 
 
   def createOrder(self):
     # Setting papameters for market order
@@ -243,8 +250,10 @@ class AutomatedTrader:
 
   def setData(self):
     # requests parsed
-    # extractedData = re.search(r'(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]', self.req, flags=re.IGNORECASE)
-    extractedData = re.search(r'order (buy|sell) [|] (.+)[@]\[*([0-9.]+)\]* [|]', self.req, flags=re.IGNORECASE)
+    if self.req[:3]=='LDC':
+      extractedData = re.search(r'(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]', self.req, flags=re.IGNORECASE)
+    else:
+      extractedData = re.search(r'order (buy|sell) [|] (.+)[@]\[*([0-9.]+)\]* [|]', self.req, flags=re.IGNORECASE)
     if extractedData == None:
       logger.error(f'Failed to extract incoming request data{self.req}')
       # return Response(status=500)

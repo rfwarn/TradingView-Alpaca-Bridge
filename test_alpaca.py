@@ -43,6 +43,90 @@ options = {
   "limitPerc": 0.0005
 }
 
+market = {
+  'Bull': "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'Bear': "LDC Kernel Bearish \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'Open': "LDC Open Long \xe2\x96\xb2 | MSFT@327.30 | (1)",
+  'OpenCLSK': "LDC Open Long \xe2\x96\xb2 | CLSK@3.83 | (1)",
+  'OpenFCEL': "LDC Open Long \xe2\x96\xb2 | FCEL@23.30 | (1)",
+  'Close': "LDC Close Short \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'Short': "LDC Open Short \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'ShortFCEL': "LDC Open Short \xe2\x96\xb2 | FCEL@2.47 | (1)",
+  'ShortMSFT': "LDC Open Short \xe2\x96\xb2 | MSFT@327.30 | (1)",
+  'Long': "LDC Close Long \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'LongFCEL': "LDC Close Long \xe2\x96\xb2 | FCEL@23.30 | (1)",
+  'Position': "LDC Open Position \xe2\x96\xb2 | CLSK@4.015 | (1)",
+  'CPositionNVDA': "LDC Close Position  \xe2\x96\xb2\xe2\x96\xbc | NVDA@[386.78] | (1)",
+  }
+
 class TestAlpaca(unittest.TestCase):
-  def test_createOrder(self):
-    result = AutomatedTrader()
+  def test_getAccout(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
+    account = result.client.get_account()
+    self.assertFalse(account.account_blocked)
+    self.assertTrue(result.data['stock'], 'MSFT')
+    self.assertTrue(result.data['price'], '337.56')
+  def test_data1(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'sell')
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.57)
+  def test_data2(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Bear'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'Bear')
+    self.assertEqual(result.data['stock'], 'CLSK')
+    self.assertEqual(result.data['price'], 4.015)
+  def test_data3(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Bull'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'Bull')
+    self.assertEqual(result.data['stock'], 'CLSK')
+    self.assertEqual(result.data['price'], 4.015)
+  def test_data4(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Open'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'Open')
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.56)
+  def test_data5(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Close'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'Close')
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.56)
+  def test_data6(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Short'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'Short')
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.56)
+  def test_data7(self):
+    options['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Long'], options=options)
+    result.setData()
+    self.assertEqual(result.data['action'], 'sell')
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.56)
+  # def test_orders(self):
+  #   self.result.setOrders()
+
+  # def test_positions(self):
+  #   self.result.setPosition()
+
+  # def test_balance(self):
+  #   self.result.setBalance()
+
+  # def test_createOrder(self):
+  #   self.result.createOrder()
+    
+if __name__ == '__main__':
+  unittest.main()
