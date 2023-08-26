@@ -60,65 +60,92 @@ market = {
   }
 
 class TestAlpaca(unittest.TestCase):
+  
+  def test_failsafe(self):
+    # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default amount of funding to use which can cause real problems if not using a paper account.
+    optCopy = options.copy()
+    optCopy['enabled'] = True
+    optCopy['testMode'] = True
+    with self.assertRaises(Exception):
+      AutomatedTrader(**realTrading, req='order sell | MSFT@337.57 | ', options=optCopy)
   def test_getAccout(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
+    # Verifies a few aspect of the paper account work.
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=optCopy)
     account = result.client.get_account()
     self.assertFalse(account.account_blocked)
     self.assertFalse(account.trade_suspended_by_user)
     self.assertFalse(account.trading_blocked)
     self.assertFalse(account.transfers_blocked)
   def test_data1(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=options)
+    # Testing of the different predefined alert types.
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'sell')
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 337.57)
   def test_data2(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Bear'], options=options)
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req='order buy | MSFT@337.57 | ', options=optCopy)
+    result.setData()
+    self.assertEqual(result.data['action'], 'buy')
+    self.assertEqual(result.data['position'], None)
+    self.assertEqual(result.data['stock'], 'MSFT')
+    self.assertEqual(result.data['price'], 337.57)
+  def test_data3(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Bear'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Bear')
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
-  def test_data3(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Bull'], options=options)
+  def test_data4(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Bull'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Bull')
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
-  def test_data4(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Open'], options=options)
+  def test_data5(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Open'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Open')
     self.assertEqual(result.data['position'], 'Long')
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 327.3)
-  def test_data5(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Long'], options=options)
+  def test_data6(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Long'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Close')
     self.assertEqual(result.data['position'], 'Long')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
-  def test_data6(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Short'], options=options)
+  def test_data7(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Short'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Open')
     self.assertEqual(result.data['position'], 'Short')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
-  def test_data7(self):
-    options['enabled'] = False
-    result = AutomatedTrader(**paperTrading, req=market['Close'], options=options)
+  def test_data8(self):
+    optCopy = options.copy()
+    optCopy['enabled'] = False
+    result = AutomatedTrader(**paperTrading, req=market['Close'], options=optCopy)
     result.setData()
     self.assertEqual(result.data['action'], 'Close')
     self.assertEqual(result.data['position'], 'Short')

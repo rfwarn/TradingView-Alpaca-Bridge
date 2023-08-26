@@ -113,7 +113,11 @@ class AutomatedTrader:
     # self.client = TradingClient(api_key, secret_key, paper=paper) 
     self.client = self.createClient()
     self.req = req
-    if self.options['enabled']==True:
+    if self.options['enabled'] and self.options['testMode'] and not self.paper:
+      err = 'testMode and real money keys being used, exiting. Switch one or the other.'
+      logger.error(err)
+      raise Exception(err)
+    elif self.options['enabled']:
       self.setData()
       self.setOrders()
       self.setPosition()
