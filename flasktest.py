@@ -3,6 +3,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.models import Position
+from configparser import ConfigParser
 import os
 import logging
 import re
@@ -23,6 +24,15 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
+# Load config
+config = ConfigParser()
+path = os.path.dirname(__file__)
+config.read(os.path.join(path + os.sep + 'trader.cfg'))
+defaults = {}
+for k, v in config['options'].items():
+  defaults[k] = v
+account = config['trading']['account']
+
 # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
 paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
 'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
@@ -33,7 +43,7 @@ realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
 'secret_key': os.environ.get("Alpaca_SECRET-real"),
 'paper': False}
 
-# Point to the one you want to use.
+# Pointer for the one you want to use.
 account = paperTrading
 
 app = Flask(__name__)
@@ -76,42 +86,44 @@ def respond():
   
 class AutomatedTrader:
   """ Class for  """
-  def __init__(self, api_key, secret_key, paper=True, req='', options={
-  # Enable/disable shorting. Not fully implemented yet. 
-  # Alert(s) needs to say short and you have to close any long positions first.
-  "short": False,
-  # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
-  # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
-  # Behaves differently when testMode is enabled.
-  "buyPerc": 0.2,
-  # Balance is set in the function setBalance().
-  "balance": 0,
-  # Not used
-  "buyBal": 0,
-  # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
-  "positions": [],
-  # Retrieves open orders is there are any for the symbol requested.
-  "orders": [],
-  # Gets all the open orders.
-  "allOrders": [],
-  # Testmode sets the balance to a predetermined amount set in createOrder.
-  # Used to not factor in remaining balance * buyPerc after positions are opened.
-  "testMode": True,
-  # enabled will allow submission of orders.
-  "enabled": True,
-  # Not used?
-  "req": "",
-  # Setting to True will impose a predefined limit for trades
-  "limit": True,
-  # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
-  "limitamt": 0.04,
-  # limit percent for everything above a certain amount which is predefined for now below.
-  "limitPerc": 0.0005
-}):
-    self.options = options
+  def __init__(self, api_key, secret_key, paper=True, req='', newOptions={}):
+    self.options = {
+      # Enable/disable shorting. Not fully implemented yet. 
+      # ***Alert(s) needs to say 'short' and you have to close any long positions first.
+      "short": False,
+      # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
+      # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
+      # Behaves differently when testMode is enabled.
+      "buyPerc": 0.2,
+      # Balance is set in the function setBalance().
+      "balance": 0,
+      # Not used
+      "buyBal": 0,
+      # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
+      "positions": [],
+      # Retrieves open orders is there are any for the symbol requested.
+      "orders": [],
+      # Gets all the open orders.
+      "allOrders": [],
+      # Testmode sets the balance to a predetermined amount set in createOrder.
+      # Used to not factor in remaining balance * buyPerc after positions are opened.
+      "testMode": True,
+      # enabled will allow submission of orders.
+      "enabled": True,
+      # Not used?
+      "req": "",
+      # Setting to True will impose a predefined limit for trades
+      "limit": True,
+      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
+      "limitamt": 0.04,
+      # limit percent for everything above a certain amount which is predefined for now below.
+      "limitPerc": 0.0005
+    }
+    self.options.update(newOptions)
     self.api_key = api_key
     self.secret_key = secret_key
     self.paper = paper
+    self.options.update(self.defaultOptions)
     # self.client = TradingClient(api_key, secret_key, paper=paper) 
     self.client = self.createClient()
     self.req = req
