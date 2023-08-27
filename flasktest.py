@@ -39,7 +39,9 @@ account = paperTrading
 app = Flask(__name__)
 
 # data examples from pine script strategy alerts:
+  # Compatible with 'Machine Learning: Lorentzian Classification' indicator alerts
   # LDC Kernel Bullish ▲ | CLSK@4.015 | (1)...
+  # Also compatible with custom stratedy alerts (ex. strategy.entry, strategy.close_all, etc.)
   # order sell | MSFT@337.57 | Directional Movement Index...
 
 def acctInfo():
@@ -82,9 +84,9 @@ class AutomatedTrader:
   # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
   # Behaves differently when testMode is enabled.
   "buyPerc": 0.2,
-  # Balance is set in function below.
+  # Balance is set in the function setBalance().
   "balance": 0,
-  # Not used?
+  # Not used
   "buyBal": 0,
   # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
   "positions": [],
