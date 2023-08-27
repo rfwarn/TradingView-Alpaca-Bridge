@@ -1,6 +1,8 @@
 # TradingView-Alpaca-alerts
 A python program that receives alerts from TradingView (indicators and strategies) and creates buy/sell orders on Alpaca with real and paper accounts.
 
+- Right now, this is good for trying strategies out with a paper account (not real trading).
+- Generate report will create a CSV daily report for buying and selling with alpaca paperor real stocks. Default is 7 days prior.
 - Uses TradingView webhook. Can use ngrok, cloud service, etc. to connect webhook to flask server.
 - Compatible with **'Machine Learning: Lorentzian Classification'** indicator alerts (match Close Long, Open Long, etc.)
   - <font color=orange>LDC Kernel Bullish ▲ | CLSK@4.015 | </font>(1)...
@@ -13,3 +15,4 @@ A python program that receives alerts from TradingView (indicators and strategie
 **Known issues:**
 - Going short from long position or vice versa doesn't work. Need to wait for order to zero out position then open an order. 
 - Need to see about adding something to fill or kill after x time, especially for limit orders. 
+- If more than one buy trigger happens too close together the cash available won't reflect both orders and can overspend. There are other failsafes in place to prevent overspending if account balance is negative.
