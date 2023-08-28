@@ -85,7 +85,7 @@ def respond():
     # return "Hello World"
   
 class AutomatedTrader:
-  """ Class for  """
+  """ Trader client and functions """
   def __init__(self, api_key, secret_key, paper=True, req='', newOptions={}):
     self.options = {
       # Enable/disable shorting. Not fully implemented yet. 
@@ -123,7 +123,6 @@ class AutomatedTrader:
     self.api_key = api_key
     self.secret_key = secret_key
     self.paper = paper
-    self.options.update(self.defaultOptions)
     # self.client = TradingClient(api_key, secret_key, paper=paper) 
     self.client = self.createClient()
     self.req = req
