@@ -3,10 +3,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.models import Position
-from configparser import ConfigParser
-import os
-import logging
-import re
+import os, logging, re, json
 
 # Create a logger
 logger = logging.getLogger('my_logger')
@@ -24,14 +21,19 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
+# File path
+def filePath():
+  return os.path.dirname(__file__)
+
 # Load config
-config = ConfigParser()
-path = os.path.dirname(__file__)
-config.read(os.path.join(path + os.sep + 'trader.cfg'))
-defaults = {}
-for k, v in config['options'].items():
-  defaults[k] = v
-account = config['trading']['account']
+with open(filePath() + os.sep + 'settings.json') as f:
+  settings = json.load(f)
+# config = ConfigParser()
+# config.read(os.path.join(path() + os.sep + 'trader.cfg'))
+# defaults = {}
+# for k, v in config['options'].items():
+#   defaults[k] = v
+# account = config['trading']['account']
 
 # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
 paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
@@ -68,6 +70,7 @@ def acctInfo():
   print(f'daytrading_buying_power: {temp.daytrading_buying_power}')
   print(f'shorting_enabled: {temp.shorting_enabled}')
   print(f'crypto_status: {temp.crypto_status}')
+  print('-------------------------------------------------')
   # print(f'{temp.}')
   # print(f'{temp.}')
   # print(f'')
@@ -119,17 +122,26 @@ class AutomatedTrader:
       # limit percent for everything above a certain amount which is predefined for now below.
       "limitPerc": 0.0005
     }
+    # Use settings if they were imported successfully.
+    if settings:
+      self.options = settings
+    # Count the items in options and if newOptions changes this raise an exception.
+    optCnt = len(self.options)
     self.options.update(newOptions)
+    if len(self.options)!=optCnt:
+      raise Exception('Extra options found. Verify newOption keys match option keys')
+    # Load keys, request data, and create trading client instance.
     self.api_key = api_key
     self.secret_key = secret_key
     self.paper = paper
-    # self.client = TradingClient(api_key, secret_key, paper=paper) 
     self.client = self.createClient()
     self.req = req
+    # Check for configuration conflict that could cause unintended usage.
     if self.options['enabled'] and self.options['testMode'] and not self.paper:
       err = 'testMode and real money keys being used, exiting. Switch one or the other.'
       logger.error(err)
       raise Exception(err)
+    # Verify 'enabled' option is True. Used primarily for unittesting.
     elif self.options['enabled']:
       self.setData()
       self.setOrders()
@@ -138,6 +150,7 @@ class AutomatedTrader:
       self.createOrder()
 
   def createClient(self):
+    # Creates the trading client based on real or paper account.
     return TradingClient(self.api_key, self.secret_key, paper=self.paper) 
 
   def createOrder(self):

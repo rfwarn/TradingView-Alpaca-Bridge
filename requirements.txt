@@ -1,4 +1,4 @@
-flask
-requests
-alpaca-py
-pandas
+Flask==2.3.2
+requests==2.31.0
+alpaca-py==0.10.0
+pandas==2.0.3

@@ -1,6 +1,5 @@
-import unittest
-from flasktest import AutomatedTrader
-import os
+from flasktest import AutomatedTrader, filePath
+import unittest, os, json
 
 paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
 'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
@@ -43,6 +42,8 @@ options = {
   "limitPerc": 0.0005
 }
 
+path = filePath()
+
 market = {
   'Bull': "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1)",
   'Bear': "LDC Kernel Bearish \xe2\x96\xb2 | CLSK@4.015 | (1)",
@@ -63,10 +64,21 @@ class TestAlpaca(unittest.TestCase):
   
   # realClient = AutomatedTrader(**realTrading, newOptions={})
   # paperClient = AutomatedTrader(**paperTrading, newOptions={})
+  def test_settings(self):
+    # Verify settings file can be loaded properly
+    with open(path+os.sep + 'settings.json') as f:
+      settings = json.load(f)
+    self.assertEqual(type(settings['testMode']), bool)
+    self.assertEqual(type(settings['orders']), list)
+    self.assertEqual(type(settings['buyPerc']), float)
+  def test_extraOptions(self):
+    # Test for typos in newOptions which would have unintended effects.
+    with self.assertRaises(Exception):
+      AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', newOptions={'enabled': True, 'newVal': True})
   def test_failsafe(self):
     # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
     with self.assertRaises(Exception):
-      AutomatedTrader(**realTrading, req='order sell | MSFT@337.57 | ', newOptions={'enabled': True, 'testMode': True})
+      AutomatedTrader(**realTrading, req='', newOptions={'enabled': True, 'testMode': True})
   def test_getAccout(self):
     # Verifies a few aspect of the paper account work.
     result = AutomatedTrader(**paperTrading, newOptions={'enabled': False})

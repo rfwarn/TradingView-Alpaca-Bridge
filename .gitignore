@@ -9,3 +9,4 @@ live*
 __pycache__/
 build/
 dist/
+settings.py
