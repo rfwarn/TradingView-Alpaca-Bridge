@@ -21,13 +21,16 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
-# File path
+# Get file path
 def filePath():
   return os.path.dirname(__file__)
 
-# Load config
-with open(filePath() + os.sep + 'settings.json') as f:
-  settings = json.load(f)
+# Load config. If file isn't found, print error in console.
+try:
+  with open(filePath() + os.sep + 'settings.json') as f:
+    settings = json.load(f)
+except FileNotFoundError:
+  print('settings.json file not found, using internal settings.')
 # config = ConfigParser()
 # config.read(os.path.join(path() + os.sep + 'trader.cfg'))
 # defaults = {}
