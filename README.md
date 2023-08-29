@@ -16,3 +16,8 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Going short from long position or vice versa doesn't work. Need to wait for order to zero out position then open an order. 
 - Need to see about adding something to fill or kill after x time, especially for limit orders. 
 - If more than one buy trigger happens too close together the cash available won't reflect both orders and can overspend. There are other failsafes in place to prevent overspending if account balance is negative.
+
+**Future plans:**
+- Generate stock/strategy performance analysis dashboard from reports generated.
+- Implement order tracking to ensure completion.
+- Use order tracking for changing from long to short positions and vice versa.

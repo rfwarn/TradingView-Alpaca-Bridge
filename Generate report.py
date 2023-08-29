@@ -8,7 +8,9 @@ import pandas as pd
 
 
 def genReport(account: str='paper', days: int=7):
-    """ Generates a general report for x days in the past. At the moment, it can only retrieve a max of 500 transactions. """
+    """ Generates a Alpaca buy/sell report for x (default 7) days in the past. At the moment, 
+        it can only retrieve a max of 500 transactions (alpaca API limitation) per request.
+        """
     if account == 'paper':
         # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
         # ALPACA_API_ENDPOINT = 'https://paper-api.alpaca.markets'
