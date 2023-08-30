@@ -63,7 +63,7 @@ market = {
 class TestAlpaca(unittest.TestCase):
   
   # realClient = AutomatedTrader(**realTrading, newOptions={})
-  # paperClient = AutomatedTrader(**paperTrading, newOptions={})
+  paperClient = AutomatedTrader(**paperTrading, req=market['Long'], newOptions={'enabled': False})
   def test_settings(self):
     # Verify settings file can be loaded properly
     with open(path+os.sep + 'settings.json') as f:
@@ -144,8 +144,11 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], 'Short')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
-  # def test_orders(self):
-  #   self.result.setOrders()
+  def test_orders(self):
+    # TODO: Need to setup order and validate it for test.
+    self.paperClient.setData()
+    self.paperClient.setOrders()
+    self.assertEqual(type(self.paperClient.options['orders']), list)
 
   # def test_positions(self):
   #   self.result.setPosition()

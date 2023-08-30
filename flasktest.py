@@ -298,6 +298,9 @@ class AutomatedTrader:
   def setOrders(self):
     # get open orders
     self.options['allOrders'] = self.client.get_orders()
+    print('open orders: \n-------------------------')
+    if len(self.options['allOrders']) == 0:
+      print('None')
     for x in self.options['allOrders']:
       print(x.symbol, x.qty)
     stock = GetOrdersRequest(symbols=[self.data['stock']])
