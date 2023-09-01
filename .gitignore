@@ -6,6 +6,7 @@ live*
 .env
 *.pyc
 *.pyo
+*.psd
 __pycache__/
 build/
 dist/

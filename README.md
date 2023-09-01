@@ -21,3 +21,5 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Generate stock/strategy performance analysis dashboard from reports generated.
 - Implement order tracking to ensure completion.
 - Use order tracking for changing from long to short positions and vice versa.
+
+![](Capture.JPG)
