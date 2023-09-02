@@ -1,15 +1,33 @@
 {
-    "short": false,
-    "buyPerc": 0.2,
-    "balance": 0,
-    "buyBal": 0,
-    "positions": [],
-    "orders": [],
-    "allOrders": [],
-    "testMode": true,
-    "enabled": true,
-    "req": "",
-    "limit": true,
-    "limitamt": 0.04,
-    "limitPerc": 0.0005
+    "using": "paper",
+    "paper": {
+        "short": false,
+        "buyPerc": 0.2,
+        "balance": 0,
+        "buyBal": 0,
+        "positions": [],
+        "orders": [],
+        "allOrders": [],
+        "testMode": true,
+        "enabled": true,
+        "req": "",
+        "limit": true,
+        "limitamt": 0.04,
+        "limitPerc": 0.0005
+    },
+    "real": {
+        "short": false,
+        "buyPerc": 0.2,
+        "balance": 0,
+        "buyBal": 0,
+        "positions": [],
+        "orders": [],
+        "allOrders": [],
+        "testMode": false,
+        "enabled": true,
+        "req": "",
+        "limit": true,
+        "limitamt": 0.04,
+        "limitPerc": 0.0005
+    }
 }

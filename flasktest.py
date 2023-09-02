@@ -29,6 +29,7 @@ def filePath():
 try:
   with open(filePath() + os.sep + 'settings.json') as f:
     settings = json.load(f)
+    settings = settings[settings['using']]
 except FileNotFoundError:
   print('settings.json file not found, using internal settings.')
 # config = ConfigParser()
