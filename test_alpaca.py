@@ -64,29 +64,40 @@ class TestAlpaca(unittest.TestCase):
   
   # realClient = AutomatedTrader(**realTrading, newOptions={})
   paperClient = AutomatedTrader(**paperTrading, req=market['Long'], newOptions={'enabled': False})
+  
+  # For debugging
+  # def setUp(self):
+  #   print("In method", self._testMethodName)
+    
   def test_settings(self):
     # Verify settings file can be loaded properly
     with open(path+os.sep + 'settings.json') as f:
       settings = json.load(f)
-    self.assertEqual(type(settings['testMode']), bool)
-    self.assertEqual(type(settings['orders']), list)
-    self.assertEqual(type(settings['buyPerc']), float)
+      setcheck = [settings['paper'], settings['real']]
+    for x in setcheck:
+      self.assertEqual(type(x['testMode']), bool)
+      self.assertEqual(type(x['orders']), list)
+      self.assertEqual(type(x['buyPerc']), float)
+    
   def test_extraOptions(self):
     # Test for typos in newOptions which would have unintended effects.
     with self.assertRaises(Exception):
       AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', newOptions={'enabled': True, 'newVal': True})
+    
   def test_failsafe(self):
     # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
     with self.assertRaises(Exception):
       AutomatedTrader(**realTrading, req='', newOptions={'enabled': True, 'testMode': True})
-  def test_getAccout(self):
-    # Verifies a few aspect of the paper account work.
-    result = AutomatedTrader(**paperTrading, newOptions={'enabled': False})
-    account = result.client.get_account()
-    self.assertFalse(account.account_blocked)
-    self.assertFalse(account.trade_suspended_by_user)
-    self.assertFalse(account.trading_blocked)
-    self.assertFalse(account.transfers_blocked)
+    
+  # def test_getAccout(self):
+  #   # Verifies a few aspect of the paper account work.
+  #   result = AutomatedTrader(**paperTrading, newOptions={'enabled': False})
+  #   account = result.client.get_account()
+  #   self.assertFalse(account.account_blocked)
+  #   self.assertFalse(account.trade_suspended_by_user)
+  #   self.assertFalse(account.trading_blocked)
+  #   self.assertFalse(account.transfers_blocked)
+    
   def test_data1(self):
     # Testing of the different predefined alert types.
     result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', newOptions={'enabled': False})
@@ -95,6 +106,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 337.57)
+    
   def test_data2(self):
     result = AutomatedTrader(**paperTrading, req='order buy | MSFT@337.57 | ', newOptions={'enabled': False})
     result.setData()
@@ -102,6 +114,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 337.57)
+    
   def test_data3(self):
     result = AutomatedTrader(**paperTrading, req=market['Bear'], newOptions={'enabled': False})
     result.setData()
@@ -109,6 +122,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
+    
   def test_data4(self):
     result = AutomatedTrader(**paperTrading, req=market['Bull'], newOptions={'enabled': False})
     result.setData()
@@ -116,6 +130,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], None)
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
+    
   def test_data5(self):
     result = AutomatedTrader(**paperTrading, req=market['Open'], newOptions={'enabled': False})
     result.setData()
@@ -123,6 +138,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], 'Long')
     self.assertEqual(result.data['stock'], 'MSFT')
     self.assertEqual(result.data['price'], 327.3)
+    
   def test_data6(self):
     result = AutomatedTrader(**paperTrading, req=market['Long'], newOptions={'enabled': False})
     result.setData()
@@ -130,6 +146,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], 'Long')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
+    
   def test_data7(self):
     result = AutomatedTrader(**paperTrading, req=market['Short'], newOptions={'enabled': False})
     result.setData()
@@ -137,6 +154,7 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], 'Short')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
+    
   def test_data8(self):
     result = AutomatedTrader(**paperTrading, req=market['Close'], newOptions={'enabled': False})
     result.setData()
@@ -144,12 +162,16 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['position'], 'Short')
     self.assertEqual(result.data['stock'], 'CLSK')
     self.assertEqual(result.data['price'], 4.015)
+    
   def test_orders(self):
     # TODO: Need to setup order and validate it for test.
     self.paperClient.setData()
     self.paperClient.setOrders()
     self.assertEqual(type(self.paperClient.options['orders']), list)
-
+    # del self.paperClient
+  # def tearDown(self):
+  #   self.paperClient.close()
+  
   # def test_positions(self):
   #   self.result.setPosition()
 

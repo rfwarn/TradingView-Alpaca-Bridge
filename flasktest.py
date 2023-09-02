@@ -121,7 +121,7 @@ class AutomatedTrader:
       "req": "",
       # Setting to True will impose a predefined limit for trades
       "limit": True,
-      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
+      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >100.
       "limitamt": 0.04,
       # limit percent for everything above a certain amount which is predefined for now below.
       "limitPerc": 0.0005
@@ -152,6 +152,9 @@ class AutomatedTrader:
       self.setPosition()
       self.setBalance()
       self.createOrder()
+
+  # def __del__(self):
+  #     print ("Object gets destroyed");
 
   def createClient(self):
     # Creates the trading client based on real or paper account.
@@ -194,14 +197,12 @@ class AutomatedTrader:
       elif self.options['short'] and posQty>0:
         # Can't short with positions so need to figure out how to sell then short.
         amount = posQty
-        # amount += posQty
       elif self.options['short'] and posQty==0:
         pass
       elif self.options['short'] and posQty<0:
         logger.info(f'Already shorted for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}')
         amount = 0
         return
-      
     elif self.data['action'] == "Close" and self.data['position'] == "Short":
       side = OrderSide.BUY
       # Close positions for symbol
@@ -213,12 +214,6 @@ class AutomatedTrader:
         pass
       elif posQty<0:
         amount = abs(posQty)
-        
-      # amount = 0
-      # if self.options['positions'] != None:
-      #   for x in self.options['positions']:
-      #     amount += abs(float(self.options['positions'].qty))
-          
     elif (self.data['action'] == "Bull" or self.data['action'] == "buy" or self.data['action'] == "Open") and (self.data['position'] == "Long" or self.data['position'] == None):
       side = OrderSide.BUY
       if self.options['positions'] != None:
@@ -247,7 +242,8 @@ class AutomatedTrader:
       return
     
     # Setup buy/sell order
-    # market order, limit disabled
+    
+    # market order, limit set to False
     if not self.options['limit']:
       order_data = MarketOrderRequest(
         symbol=self.data['stock'], # "MSFT"      
@@ -255,14 +251,14 @@ class AutomatedTrader:
         side=side,
         time_in_force=TimeInForce.GTC
         )
-    # Limit order
+    # Limit order, limit set to True
     elif self.options['limit']:
+      # Predefined price for limitPerc to override limitamt
       if self.data['price']>100:
         self.options['limitamt'] = self.data['price']*self.options['limitPerc']
       order_data = LimitOrderRequest(
         symbol=self.data['stock'], # "MSFT"
         limit_price=round(self.data['price']+(self.options['limitamt'] if side==OrderSide.BUY else -self.options['limitamt']),2),
-        # limit_price=round(self.data['price']+(self.options['limitamt'] if side==OrderSide.BUY else -self.options['limitamt']),2),
         qty=amount, # 100
         side=side,
         time_in_force=TimeInForce.GTC
@@ -273,8 +269,8 @@ class AutomatedTrader:
   def submitOrder(self, order_data):
     if not self.options['enabled']:
       # escape and don't actually submit order if not enabled. For debugging/testing purposes.
-      logger.debug(f'Order not placed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
-      return
+      logger.debug(f'Not enabled, order not placed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      return order_data
     # Market order
     self.order = self.client.submit_order(order_data)
     
@@ -299,9 +295,6 @@ class AutomatedTrader:
   def setOrders(self):
     # get open orders
     self.options['allOrders'] = self.client.get_orders()
-    print('open orders: \n-------------------------')
-    if len(self.options['allOrders']) == 0:
-      print('None')
     for x in self.options['allOrders']:
       print(x.symbol, x.qty)
     stock = GetOrdersRequest(symbols=[self.data['stock']])

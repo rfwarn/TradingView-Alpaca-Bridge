@@ -13,6 +13,7 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Stop loss and other similar features should be handled in pine script. 
 - Cancels any open order for the specified stock if another order is received then processes new order.
 - Checks position before shorting/going long.
+- Buy price is received from TradingView webhook for position size calculation.
 
 ***
 **Known issues:**
@@ -25,7 +26,7 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Implement order tracking to ensure completion.
 - Use order tracking for changing from long to short positions and vice versa.
 ***
-**Settings:**
+**Settings (adjusted in the settings.json file):**
 
     {
       # Enable/disable shorting. Not fully implemented yet. 
@@ -54,9 +55,9 @@ A python program that receives alerts from TradingView (indicators and strategie
       "req": "",
       # Setting to True will impose a predefined limit for trades
       "limit": True,
-      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
+      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >100.
       "limitamt": 0.04,
-      # limit percent for everything above a certain amount which is predefined for now below.
+      # limit percent for everything above a certain amount which is predefined for now in flasktest.
       "limitPerc": 0.0005
     }
 ![](Capture.JPG)
