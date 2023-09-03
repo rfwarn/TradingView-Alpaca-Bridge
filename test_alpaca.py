@@ -168,10 +168,10 @@ class TestAlpaca(unittest.TestCase):
     self.paperClient.setData()
     self.paperClient.setOrders()
     self.assertEqual(type(self.paperClient.options['orders']), list)
-    # del self.paperClient
+
   # def tearDown(self):
   #   self.paperClient.close()
-  
+
   # def test_positions(self):
   #   self.result.setPosition()
 
@@ -180,6 +180,20 @@ class TestAlpaca(unittest.TestCase):
 
   # def test_createOrder(self):
   #   self.result.createOrder()
-    
+
+  # def tearDown(self):
+  # For debugging:
+  #   print("In method: ", self._testMethodName)
+  #   if self._testMethodName=='test_getAccout':
+  #     snapshot = tracemalloc.take_snapshot()
+  #     top_stats = snapshot.statistics('lineno')
+
+  #     with open('output.txt', 'w') as f:
+  #       for stat in top_stats:
+  #         f.write(str(stat) + '\n')
+  #     x = 20
+  #     print(f"[ Top {x} ]")
+  #     for stat in top_stats[:x]:
+  #         print(stat)
 if __name__ == '__main__':
   unittest.main()
