@@ -62,6 +62,7 @@ app = Flask(__name__)
 
 def acctInfo():
   temp = TradingClient(**account).get_account()
+  print(f'***account: {"PAPER" if account["paper"] else "REAL MONEY"}')
   print(f'status: {temp.status}')
   print(f'account blocked: {temp.account_blocked}')
   print(f'trade_suspended_by_user: {temp.trade_suspended_by_user}')
@@ -140,7 +141,7 @@ class AutomatedTrader:
     self.paper = paper
     self.client = self.createClient()
     self.req = req
-    # Check for configuration conflict that could cause unintended usage.
+    # Check for configuration conflict that could cause unintended buying.
     if self.options['enabled'] and self.options['testMode'] and not self.paper:
       err = 'testMode and real money keys being used, exiting. Switch one or the other.'
       logger.error(err)
@@ -152,9 +153,7 @@ class AutomatedTrader:
       self.setPosition()
       self.setBalance()
       self.createOrder()
-
-  # def __del__(self):
-  #     print ("Object gets destroyed");
+      self.submitOrder()
 
   def createClient(self):
     # Creates the trading client based on real or paper account.
@@ -263,18 +262,22 @@ class AutomatedTrader:
         side=side,
         time_in_force=TimeInForce.GTC
         )
-    
-    self.submitOrder(order_data)
+    self.order_data = order_data
+    # self.submitOrder(order_data)
 
-  def submitOrder(self, order_data):
+  def submitOrder(self):
     if not self.options['enabled']:
       # escape and don't actually submit order if not enabled. For debugging/testing purposes.
       logger.debug(f'Not enabled, order not placed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
-      return order_data
+      return
     # Market order
-    self.order = self.client.submit_order(order_data)
-    
+    self.order = self.client.submit_order(self.order_data)
+    self.verifyOrder()
     # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
+
+  def verifyOrder(self):
+    while self.order.filled_at==None and self.order.failed_at==None:
+      break
 
   def setBalance(self):
     # set balance at beginning and after each transaction
@@ -337,7 +340,7 @@ class AutomatedTrader:
       return logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
 
 if __name__ == '__main__':
-  # validate it's working. Just paper trading at the moment.
+  # General account info.
   acctInfo()
   app.run(port=5000, debug=False, threaded=True)
   

@@ -164,22 +164,35 @@ class TestAlpaca(unittest.TestCase):
     self.assertEqual(result.data['price'], 4.015)
     
   def test_orders(self):
-    # TODO: Need to setup order and validate it for test.
     self.paperClient.setData()
     self.paperClient.setOrders()
     self.assertEqual(type(self.paperClient.options['orders']), list)
 
-  # def tearDown(self):
-  #   self.paperClient.close()
-
   # def test_positions(self):
   #   self.result.setPosition()
 
-  # def test_balance(self):
-  #   self.result.setBalance()
+  def test_balance(self):
+    result = AutomatedTrader(**paperTrading, req=market['Close'], newOptions={'enabled': False, 'testMode': True})
+    result.setBalance()
 
-  # def test_createOrder(self):
-  #   self.result.createOrder()
+  def test_createLimitOrder(self):
+    result = AutomatedTrader(**paperTrading, req=market['Close'], newOptions={'enabled': False})
+    result.setData()
+    result.setPosition()
+    result.createOrder()
+    self.assertEqual(result.order_data.limit_price, 4.05)
+    self.assertEqual(result.order_data.qty, 4981.0)
+    self.assertEqual(result.order_data.symbol, 'CLSK')
+
+  def test_createMarketOrder(self):
+    result = AutomatedTrader(**paperTrading, req=market['Close'], newOptions={'enabled': False, "limit": False})
+    result.setData()
+    result.setPosition()
+    result.createOrder()
+    self.assertEqual(result.order_data.qty, 4981.0)
+    self.assertEqual(result.order_data.symbol, 'CLSK')
+    with self.assertRaises(AttributeError):
+      result.order_data.limit_price
 
   # def tearDown(self):
   # For debugging:
