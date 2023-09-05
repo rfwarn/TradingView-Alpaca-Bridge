@@ -13,7 +13,8 @@
         "req": "",
         "limit": true,
         "limitamt": 0.04,
-        "limitPerc": 0.0005
+        "limitPerc": 0.0005,
+        "maxTime": 10
     },
     "real": {
         "short": false,
@@ -28,6 +29,7 @@
         "req": "",
         "limit": true,
         "limitamt": 0.04,
-        "limitPerc": 0.0005
+        "limitPerc": 0.0005,
+        "maxTime": 10
     }
 }

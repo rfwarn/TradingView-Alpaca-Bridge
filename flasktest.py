@@ -3,7 +3,7 @@ from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, GetOrdersRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.models import Position
-import os, logging, re, json
+import os, logging, re, json, time
 
 # Create a logger
 logger = logging.getLogger('my_logger')
@@ -125,7 +125,9 @@ class AutomatedTrader:
       # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >100.
       "limitamt": 0.04,
       # limit percent for everything above a certain amount which is predefined for now below.
-      "limitPerc": 0.0005
+      "limitPerc": 0.0005,
+      # Maxtime in seconds before canceling an order
+      "maxTime":10
     }
     # Use settings if they were imported successfully.
     if settings:
@@ -153,7 +155,6 @@ class AutomatedTrader:
       self.setPosition()
       self.setBalance()
       self.createOrder()
-      self.submitOrder()
 
   def createClient(self):
     # Creates the trading client based on real or paper account.
@@ -263,9 +264,13 @@ class AutomatedTrader:
         time_in_force=TimeInForce.GTC
         )
     self.order_data = order_data
-    # self.submitOrder(order_data)
+    self.submitOrder()
 
   def submitOrder(self):
+    try:
+      self.order_data
+    except AttributeError:
+      return
     if not self.options['enabled']:
       # escape and don't actually submit order if not enabled. For debugging/testing purposes.
       logger.debug(f'Not enabled, order not placed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
@@ -275,9 +280,27 @@ class AutomatedTrader:
     self.verifyOrder()
     # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
-  def verifyOrder(self):
-    while self.order.filled_at==None and self.order.failed_at==None:
-      break
+  def verifyOrder(self, order=None):
+    # TODO: Need to add async stream method for checking for order completion.
+    maxTime = 10
+    now = time.time()
+    id = self.order.client_order_id
+    while self.order.filled_at==None and self.order.failed_at==None and self.order.canceled_at==None:
+      if time.time() - now > maxTime:
+        self.cancelOrderById(self.order.id.hex)
+        logger.debug(f'Order exeeded max time for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      elif time.time() - now > 50:
+        # failsafe to exit loop
+        logger.warn(f'Order exeeded 50 seconds for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+        break
+      self.order = self.client.get_order_by_client_id(id)
+      time.sleep(1)
+    if self.order.canceled_at!=None:
+      logger.debug(f'Order canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+    elif self.order.failed_at!=None:
+      logger.warn(f'Order failed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+    elif self.order.filled_at!=None:
+      logger.info(f'Order filled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
 
   def setBalance(self):
     # set balance at beginning and after each transaction
@@ -330,14 +353,18 @@ class AutomatedTrader:
   def cancelAll(self):
     self.canxStatus = self.client.cancel_orders()
   
-  def cancelOrderById(self):
+  def cancelOrderById(self, id=None):
     if not self.options['enabled']:
       value = f'Trading not enable, order not canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}'
       logger.debug(value)
       return value
+    elif id!=None:
+      self.client.cancel_order_by_id(id)
+      # self.verifyOrder()
+      return
     for x in self.options['orders']:
       self.client.cancel_order_by_id(x.id.hex)
-      return logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
+      logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
 
 if __name__ == '__main__':
   # General account info.

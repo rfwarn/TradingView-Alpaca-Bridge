@@ -88,16 +88,7 @@ class TestAlpaca(unittest.TestCase):
     # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
     with self.assertRaises(Exception):
       AutomatedTrader(**realTrading, req='', newOptions={'enabled': True, 'testMode': True})
-    
-  # def test_getAccout(self):
-  #   # Verifies a few aspect of the paper account work.
-  #   result = AutomatedTrader(**paperTrading, newOptions={'enabled': False})
-  #   account = result.client.get_account()
-  #   self.assertFalse(account.account_blocked)
-  #   self.assertFalse(account.trade_suspended_by_user)
-  #   self.assertFalse(account.trading_blocked)
-  #   self.assertFalse(account.transfers_blocked)
-    
+
   def test_data1(self):
     # Testing of the different predefined alert types.
     result = AutomatedTrader(**paperTrading, req='order sell | MSFT@337.57 | ', newOptions={'enabled': False})
@@ -194,8 +185,22 @@ class TestAlpaca(unittest.TestCase):
     with self.assertRaises(AttributeError):
       result.order_data.limit_price
 
+  def test_createMarketOrderBuy(self):
+    result = AutomatedTrader(**paperTrading, req='order buy | CLSK@5.965 | Close position', newOptions={'enabled': True, "limit": False})
+    result.setData()
+    result.setPosition()
+    result.createOrder()
+    # time.sleep(5)
+
+  def test_createMarketOrderSell(self):
+    result = AutomatedTrader(**paperTrading, req='order sell | CLSK@5.965 | Close position', newOptions={'enabled': True, "limit": False})
+    result.setData()
+    result.setPosition()
+    result.createOrder()
+    # time.sleep(5)
+
   # def tearDown(self):
-  # For debugging:
+  #   For debugging:
   #   print("In method: ", self._testMethodName)
   #   if self._testMethodName=='test_getAccout':
   #     snapshot = tracemalloc.take_snapshot()
