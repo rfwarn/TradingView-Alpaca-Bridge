@@ -73,7 +73,7 @@ class TestAlpaca(unittest.TestCase):
     # Verify settings file can be loaded properly
     with open(path+os.sep + 'settings.json') as f:
       settings = json.load(f)
-      setcheck = [settings['paper'], settings['real']]
+      setcheck = [settings['paperTrading'], settings['realTrading']]
     for x in setcheck:
       self.assertEqual(type(x['testMode']), bool)
       self.assertEqual(type(x['orders']), list)

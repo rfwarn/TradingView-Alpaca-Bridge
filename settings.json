@@ -1,6 +1,6 @@
 {
-    "using": "paper",
-    "paper": {
+    "using": "paperTrading",
+    "paperTrading": {
         "short": false,
         "buyPerc": 0.2,
         "balance": 0,
@@ -13,10 +13,11 @@
         "req": "",
         "limit": true,
         "limitamt": 0.04,
+        "limitThreshold": 100,
         "limitPerc": 0.0005,
         "maxTime": 10
     },
-    "real": {
+    "realTrading": {
         "short": false,
         "buyPerc": 0.2,
         "balance": 0,
@@ -29,6 +30,7 @@
         "req": "",
         "limit": true,
         "limitamt": 0.04,
+        "limitThreshold": 100,
         "limitPerc": 0.0005,
         "maxTime": 10
     }

@@ -21,24 +21,6 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
-# Get file path
-def filePath():
-  return os.path.dirname(__file__)
-
-# Load config. If file isn't found, print error in console.
-try:
-  with open(filePath() + os.sep + 'settings.json') as f:
-    settings = json.load(f)
-    settings = settings[settings['using']]
-except FileNotFoundError:
-  print('settings.json file not found, using internal settings.')
-# config = ConfigParser()
-# config.read(os.path.join(path() + os.sep + 'trader.cfg'))
-# defaults = {}
-# for k, v in config['options'].items():
-#   defaults[k] = v
-# account = config['trading']['account']
-
 # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
 paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
 'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
@@ -49,8 +31,21 @@ realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
 'secret_key': os.environ.get("Alpaca_SECRET-real"),
 'paper': False}
 
-# Pointer for the one you want to use.
-account = paperTrading
+
+# Get file path
+def filePath():
+  return os.path.dirname(__file__)
+
+# Load config. If file isn't found, print error in console and use defaults in class.
+try:
+  with open(filePath() + os.sep + 'settings.json') as f:
+    settings = json.load(f)
+    # Pointer for the type you want to use (real/paper).
+    account = settings['using']
+    settings = settings[account]
+except FileNotFoundError:
+  
+  print('settings.json file not found, using internal settings.')
 
 app = Flask(__name__)
 
@@ -122,8 +117,10 @@ class AutomatedTrader:
       "req": "",
       # Setting to True will impose a predefined limit for trades
       "limit": True,
-      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >100.
+      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >limitThreshold.
       "limitamt": 0.04,
+      # Limit threshold $ amount to change to % based limit
+      "limitThreshold": 100,
       # limit percent for everything above a certain amount which is predefined for now below.
       "limitPerc": 0.0005,
       # Maxtime in seconds before canceling an order
@@ -253,8 +250,8 @@ class AutomatedTrader:
         )
     # Limit order, limit set to True
     elif self.options['limit']:
-      # Predefined price for limitPerc to override limitamt
-      if self.data['price']>100:
+      # Predefined price to override limitamt with limitPerc*price
+      if self.data['price']>self.options['limitThreshold']:
         self.options['limitamt'] = self.data['price']*self.options['limitPerc']
       order_data = LimitOrderRequest(
         symbol=self.data['stock'], # "MSFT"
