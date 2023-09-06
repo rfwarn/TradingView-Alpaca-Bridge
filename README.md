@@ -55,9 +55,13 @@ A python program that receives alerts from TradingView (indicators and strategie
       "req": "",
       # Setting to True will impose a predefined limit for trades
       "limit": True,
-      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >100.
+      # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >limitThreshold.
       "limitamt": 0.04,
-      # limit percent for everything above a certain amount which is predefined for now in flasktest.
-      "limitPerc": 0.0005
+      # Limit threshold $ amount to change to % based limit
+      "limitThreshold": 100,
+      # limit percent for everything above a certain amount which is predefined for now below.
+      "limitPerc": 0.0005,
+      # Maxtime in seconds before canceling an order
+      "maxTime":10
     }
 ![](Capture.JPG)
