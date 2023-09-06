@@ -47,6 +47,8 @@ except FileNotFoundError:
   
   print('settings.json file not found, using internal settings.')
 
+account = paperTrading
+
 app = Flask(__name__)
 
 # data examples from pine script strategy alerts:
