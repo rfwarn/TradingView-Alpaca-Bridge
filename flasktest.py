@@ -366,7 +366,8 @@ class AutomatedTrader:
       logger.info(f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}')
 
 if __name__ == '__main__':
-  # General account info.
+  # Display general account info.
   acctInfo()
+  # Start the app
   app.run(port=5000, debug=False, threaded=True)
   

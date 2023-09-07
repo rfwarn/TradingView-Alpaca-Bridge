@@ -8,7 +8,7 @@ import pandas as pd
 
 
 def genReport(account: str='paper', days: int=7):
-    """ Generates a Alpaca buy/sell report for x (default 7) days in the past. At the moment, 
+    """ Generates a Alpaca buy/sell report for last x (default 7) days. At the moment, 
         it can only retrieve a max of 500 transactions (alpaca API limitation) per request.
         """
     if account == 'paper':
@@ -43,10 +43,8 @@ def genReport(account: str='paper', days: int=7):
         
     df = pd.DataFrame(newdict)
     
-    name = 'AlpacaTest.csv' if account == 'paper' else 'AlpacaReal.csv'
+    name = 'AlpacaPaper.csv' if account == 'paper' else 'AlpacaReal.csv'
     df.to_csv(name)
-    # df.to_excel('Alpacatest.xlsx')
-    # print('test')
     return df
 
 
