@@ -1,13 +1,16 @@
-from flasktest import AutomatedTrader, filePath
+from flasktest import AutomatedTrader, filePath, getKeys
 import unittest, os, json
 
-paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
-'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
-'paper': True}
+# paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
+# 'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
+# 'paper': True}
 
-realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
-'secret_key': os.environ.get("Alpaca_SECRET-real"),
-'paper': False}
+# realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
+# 'secret_key': os.environ.get("Alpaca_SECRET-real"),
+# 'paper': False}
+
+paperTrading = getKeys('paperTrading')
+realTrading = getKeys('realTrading')
 
 options = {
   # Enable/disable shorting. Not fully implemented yet. 

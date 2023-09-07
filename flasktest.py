@@ -6,13 +6,13 @@ from alpaca.trading.models import Position
 import os, logging, re, json, time
 
 # Create a logger
-logger = logging.getLogger('my_logger')
+logger = logging.getLogger('AlpacaLogger')
 
 # Set the log level to include all messages
 logger.setLevel(logging.DEBUG)
 
 # Create a file handler
-handler = logging.FileHandler('my_app.log')
+handler = logging.FileHandler('AlpacaLogger.log')
 
 # Create a formatter and add it to the handler
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -21,16 +21,24 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
-# Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
-paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
-'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
-'paper': True}
+def getKeys(account):
+  # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
+  paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
+  'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
+  'paper': True}
 
-# Real money trading
-realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
-'secret_key': os.environ.get("Alpaca_SECRET-real"),
-'paper': False}
-
+  # Real money trading
+  realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
+  'secret_key': os.environ.get("Alpaca_SECRET-real"),
+  'paper': False}
+  
+  if account=='paperTrading':
+    account = paperTrading
+  elif account=='realTrading':
+    account = realTrading
+  else:
+    raise NameError('Verify account name is correct')
+  return account
 
 # Get file path
 def filePath():
@@ -41,13 +49,13 @@ try:
   with open(filePath() + os.sep + 'settings.json') as f:
     settings = json.load(f)
     # Pointer for the type you want to use (real/paper).
-    account = settings['using']
+    account = getKeys(settings['using'])
     settings = settings[account]
 except FileNotFoundError:
   
   print('settings.json file not found, using internal settings.')
 
-account = paperTrading
+# account = paperTrading
 
 app = Flask(__name__)
 
@@ -281,13 +289,13 @@ class AutomatedTrader:
 
   def verifyOrder(self, order=None):
     # TODO: Need to add async stream method for checking for order completion.
-    maxTime = 10
+    maxTime = self.options["maxTime"]
     now = time.time()
     id = self.order.client_order_id
     while self.order.filled_at==None and self.order.failed_at==None and self.order.canceled_at==None:
       if time.time() - now > maxTime:
         self.cancelOrderById(self.order.id.hex)
-        logger.debug(f'Order exeeded max time for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+        logger.debug(f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
       elif time.time() - now > 50:
         # failsafe to exit loop
         logger.warn(f'Order exeeded 50 seconds for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
