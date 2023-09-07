@@ -1,16 +1,9 @@
 from flasktest import AutomatedTrader, filePath, getKeys
 import unittest, os, json
 
-# paperTrading = {'api_key': os.environ.get('Alpaca_API_KEY'),
-# 'secret_key': os.environ.get("Alpaca_SECRET_KEY"),
-# 'paper': True}
-
-# realTrading = {'api_key': os.environ.get('Alpaca_API_KEY-real'),
-# 'secret_key': os.environ.get("Alpaca_SECRET-real"),
-# 'paper': False}
-
 paperTrading = getKeys('paperTrading')
 realTrading = getKeys('realTrading')
+path = filePath()
 
 options = {
   # Enable/disable shorting. Not fully implemented yet. 
@@ -44,8 +37,6 @@ options = {
   # limit percent for everything above a certain amount which is predefined for now below.
   "limitPerc": 0.0005
 }
-
-path = filePath()
 
 market = {
   'Bull': "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1)",
@@ -189,7 +180,7 @@ class TestAlpaca(unittest.TestCase):
       result.order_data.limit_price
 
   def test_createMarketOrderBuy(self):
-    result = AutomatedTrader(**paperTrading, req='order buy | CLSK@5.965 | Close position', newOptions={'enabled': True, "limit": False})
+    result = AutomatedTrader(**paperTrading, req='order buy | CLSK@5.965 | Strat buy', newOptions={'enabled': True, "limit": False})
     result.setData()
     result.setPosition()
     result.createOrder()
@@ -200,21 +191,6 @@ class TestAlpaca(unittest.TestCase):
     result.setData()
     result.setPosition()
     result.createOrder()
-    # time.sleep(5)
 
-  # def tearDown(self):
-  #   For debugging:
-  #   print("In method: ", self._testMethodName)
-  #   if self._testMethodName=='test_getAccout':
-  #     snapshot = tracemalloc.take_snapshot()
-  #     top_stats = snapshot.statistics('lineno')
-
-  #     with open('output.txt', 'w') as f:
-  #       for stat in top_stats:
-  #         f.write(str(stat) + '\n')
-  #     x = 20
-  #     print(f"[ Top {x} ]")
-  #     for stat in top_stats[:x]:
-  #         print(stat)
 if __name__ == '__main__':
   unittest.main()

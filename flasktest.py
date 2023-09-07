@@ -37,7 +37,7 @@ def getKeys(account):
   elif account=='realTrading':
     account = realTrading
   else:
-    raise NameError('Verify account name is correct')
+    raise NameError('Verify account type (realTrading/paperTrading) is correct in settings(using:)')
   return account
 
 # Get file path
@@ -50,12 +50,10 @@ try:
     settings = json.load(f)
     # Pointer for the type you want to use (real/paper).
     account = getKeys(settings['using'])
-    settings = settings[account]
+    settings = settings[settings['using']]
 except FileNotFoundError:
   
   print('settings.json file not found, using internal settings.')
-
-# account = paperTrading
 
 app = Flask(__name__)
 
@@ -81,9 +79,6 @@ def acctInfo():
   print(f'shorting_enabled: {temp.shorting_enabled}')
   print(f'crypto_status: {temp.crypto_status}')
   print('-------------------------------------------------')
-  # print(f'{temp.}')
-  # print(f'{temp.}')
-  # print(f'')
 
 @app.route('/', methods=['POST'])
 def respond():
