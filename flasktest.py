@@ -93,7 +93,9 @@ def respond():
     # return "Hello World"
   
 class AutomatedTrader:
-  """ Trader client and functions """
+  """ Trader client and functions for buying, selling, and validating of orders. 
+      'req' is the request that needs to be processed.
+  """
   def __init__(self, api_key, secret_key, paper=True, req='', newOptions={}):
     self.options = {
       # Enable/disable shorting. Not fully implemented yet. 
