@@ -178,6 +178,71 @@ class AutomatedTrader:
         # Creates the trading client based on real or paper account.
         return TradingClient(self.api_key, self.secret_key, paper=self.paper)
 
+    def setData(self):
+        # requests parsed for either Machine Learning: Lorentzian Classification or custom alerts (noted in documentation how to setup).
+        if self.req[:3] == "LDC":
+            extractedData = re.search(
+                # regex 
+                r"(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]",
+                self.req,
+                flags=re.IGNORECASE,
+            )
+        else:
+            extractedData = re.search(
+                r"order (buy|sell) [|] (.+)[@]\[*([0-9.]+)\]* [|]",
+                self.req,
+                flags=re.IGNORECASE,
+            )
+        if extractedData == None:
+            logger.error(f"Failed to extract incoming request data{self.req}")
+            # return Response(status=500)
+        elif len(extractedData.groups()) == 3:
+            self.data = {
+                "action": extractedData.group(1),
+                "position": None,
+                "stock": extractedData.group(2),
+                "price": float(extractedData.group(3)),
+            }
+        elif len(extractedData.groups()) == 4:
+            self.data = {
+                "action": extractedData.group(1),
+                "position": extractedData.group(2),
+                "stock": extractedData.group(3),
+                "price": float(extractedData.group(4)),
+            }
+        else:
+            err = f"invalid webhook received: {self.req}"
+            logger.error(err)
+            print(err)
+
+    def setOrders(self):
+        # get open orders
+        self.options["allOrders"] = self.client.get_orders()
+        for x in self.options["allOrders"]:
+            print(x.symbol, x.qty)
+        stock = GetOrdersRequest(symbols=[self.data["stock"]])
+        # self.options['stockOrders'] = self.client.get_orders(stock)
+        self.options["orders"] = self.client.get_orders(stock)
+
+    def setPosition(self):
+        # get stock positions
+        try:
+            self.options["positions"] = self.client.get_open_position(
+                self.data["stock"]
+            )
+        except Exception as e:
+            # logger.warning(e)
+            self.options["positions"] = None
+
+    def setBalance(self):
+        # set balance at beginning and after each transaction
+        cash = float(self.client.get_account().cash)
+        nMBP = float(self.client.get_account().non_marginable_buying_power)
+        acctBal = cash
+        # acctBal = cash - (cash-nMBP)*2
+        # acctBal = float(self.client.get_account().cash)
+        self.options["balance"] = acctBal
+
     def createOrder(self):
         # Setting papameters for market order
         # Clear uncompleted open orders. Shouldn't be any unless it's after hours...
@@ -375,73 +440,6 @@ class AutomatedTrader:
                 f'Order filled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
 
-    def setBalance(self):
-        # set balance at beginning and after each transaction
-        cash = float(self.client.get_account().cash)
-        nMBP = float(self.client.get_account().non_marginable_buying_power)
-        acctBal = cash
-        # acctBal = cash - (cash-nMBP)*2
-        # acctBal = float(self.client.get_account().cash)
-        self.options["balance"] = acctBal
-
-    def setPosition(self):
-        # get stock positions
-        try:
-            self.options["positions"] = self.client.get_open_position(
-                self.data["stock"]
-            )
-        except Exception as e:
-            # logger.warning(e)
-            self.options["positions"] = None
-
-    def setOrders(self):
-        # get open orders
-        self.options["allOrders"] = self.client.get_orders()
-        for x in self.options["allOrders"]:
-            print(x.symbol, x.qty)
-        stock = GetOrdersRequest(symbols=[self.data["stock"]])
-        # self.options['stockOrders'] = self.client.get_orders(stock)
-        self.options["orders"] = self.client.get_orders(stock)
-
-    def setData(self):
-        # requests parsed
-        if self.req[:3] == "LDC":
-            extractedData = re.search(
-                r"(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]",
-                self.req,
-                flags=re.IGNORECASE,
-            )
-        else:
-            extractedData = re.search(
-                r"order (buy|sell) [|] (.+)[@]\[*([0-9.]+)\]* [|]",
-                self.req,
-                flags=re.IGNORECASE,
-            )
-        if extractedData == None:
-            logger.error(f"Failed to extract incoming request data{self.req}")
-            # return Response(status=500)
-        elif len(extractedData.groups()) == 3:
-            self.data = {
-                "action": extractedData.group(1),
-                "position": None,
-                "stock": extractedData.group(2),
-                "price": float(extractedData.group(3)),
-            }
-        elif len(extractedData.groups()) == 4:
-            self.data = {
-                "action": extractedData.group(1),
-                "position": extractedData.group(2),
-                "stock": extractedData.group(3),
-                "price": float(extractedData.group(4)),
-            }
-        else:
-            err = f"invalid webhook received: {self.req}"
-            logger.error(err)
-            print(err)
-
-    def cancelAll(self):
-        self.canxStatus = self.client.cancel_orders()
-
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:
             value = f'Trading not enable, order not canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}'
@@ -456,6 +454,9 @@ class AutomatedTrader:
             logger.info(
                 f'Canceled order for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}, id: {x.id.hex}'
             )
+
+    def cancelAll(self):
+        self.canxStatus = self.client.cancel_orders()
 
 
 if __name__ == "__main__":
