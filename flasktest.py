@@ -82,15 +82,12 @@ def acctInfo():
 
 @app.route('/', methods=['POST'])
 def respond():
-    # print(request.data)
     
     req_data = str(request.data)
     logger.info(f'Recieved request with data: {req_data}')
     trader = AutomatedTrader(**account, req=req_data)
     
-    
     return Response(status=200)
-    # return "Hello World"
   
 class AutomatedTrader:
   """ Trader client and functions for buying, selling, and validating of orders. 
@@ -231,14 +228,14 @@ class AutomatedTrader:
         amount += posQty
       # need to add short depending if shorting is enabled. Not needed?
       # if not self.options['short']:
-      #   logger.info(f'Shorting not enabled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      #   logger.info(f'Shorting not enabled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
       #   return
     else:
-      logger.error(f'Unhandled Order: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}')
+      logger.error(f'Unhandled Order: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}')
       
     # return if 0 shares are to be bought. Basically not enough left over for buying 1 share or more
     if amount==0:
-      logger.info(f'0 Orders requested: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      logger.info(f'0 Orders requested: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}')
       return
     # return if less then 0 shares are to be bought. Shouldn't happen right now
     elif amount<0:
@@ -277,7 +274,7 @@ class AutomatedTrader:
       return
     if not self.options['enabled']:
       # escape and don't actually submit order if not enabled. For debugging/testing purposes.
-      logger.debug(f'Not enabled, order not placed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      logger.debug(f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
       return
     # Market order
     self.order = self.client.submit_order(self.order_data)
@@ -287,24 +284,25 @@ class AutomatedTrader:
   def verifyOrder(self, order=None):
     # TODO: Need to add async stream method for checking for order completion.
     maxTime = self.options["maxTime"]
+    cancelTime = 30
     now = time.time()
     id = self.order.client_order_id
     while self.order.filled_at==None and self.order.failed_at==None and self.order.canceled_at==None:
       if time.time() - now > maxTime:
         self.cancelOrderById(self.order.id.hex)
-        logger.debug(f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
-      elif time.time() - now > 50:
+        logger.debug(f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
+      elif time.time() - now > cancelTime:
         # failsafe to exit loop
-        logger.warn(f'Order exeeded 50 seconds for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+        logger.warn(f'Order exeeded {cancelTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
         break
       self.order = self.client.get_order_by_client_id(id)
       time.sleep(1)
     if self.order.canceled_at!=None:
-      logger.debug(f'Order canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      logger.debug(f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
     elif self.order.failed_at!=None:
-      logger.warn(f'Order failed for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      logger.warn(f'Order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
     elif self.order.filled_at!=None:
-      logger.info(f'Order filled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}')
+      logger.info(f'Order filled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
 
   def setBalance(self):
     # set balance at beginning and after each transaction
@@ -351,8 +349,9 @@ class AutomatedTrader:
       'stock': extractedData.group(3),
       'price': float(extractedData.group(4))}
     else: 
-      logger.error('invalid webhook received')
-      print('invalid webhook received')
+      err = f'invalid webhook received: {self.req}'
+      logger.error(err)
+      print(err)
       
   def cancelAll(self):
     self.canxStatus = self.client.cancel_orders()
