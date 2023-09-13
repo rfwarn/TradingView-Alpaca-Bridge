@@ -5,11 +5,11 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Right now, this is good for trying strategies out with a paper account (not real trading).
 - Generate report will create a CSV daily report for buying and selling with alpaca paperor real stocks. Default is 7 days prior.
 - Uses TradingView webhook. Can use ngrok, cloud service, etc. to connect webhook to flask server.
-- Compatible with **'Machine Learning: Lorentzian Classification'** indicator alerts (match Close Long, Open Long, etc.)
+- Compatible with jdehorty's **'Machine Learning: Lorentzian Classification'** indicator alerts (match Close Long, Open Long, etc.).
   - <font color=orange>LDC Kernel Bullish ▲ | CLSK@4.015 | </font>(1)...
-- Also compatible with strategy alerts (ex. strategy.entry, strategy.close_all, etc.)
+- Also compatible with strategy alerts (ex. strategy.entry, strategy.close_all, etc.).
   - <font color=orange>order sell | MSFT@337.57 | </font>Directional Movement Index...
-  -   Add the following to the beginning of a strategy alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}}`.
+  -   Add the following to the beginning of a strategy alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}} `...
 - Stop loss and other similar features should be handled in pine script. 
 - Cancels any open order for the specified stock if another order is received then processes new order.
 - Checks position before shorting/going long.
