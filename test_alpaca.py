@@ -194,7 +194,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createLimitOrder(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Close"], newOptions={"enabled": False}
+            **paperTrading, req=market["Close"], newOptions={"enabled": False, "limit": True}
         )
         result.setData()
         result.setPosition()
@@ -238,6 +238,14 @@ class TestAlpaca(unittest.TestCase):
         result.setPosition()
         result.createOrder()
 
+    def test_badRequest(self):
+        with self.assertRaises(Exception):
+            result = AutomatedTrader(
+                **paperTrading,
+                req="123",
+                newOptions={"enabled": True, "limit": False}
+            )
+            result.setData()
 
 if __name__ == "__main__":
     unittest.main()

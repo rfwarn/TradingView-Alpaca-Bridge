@@ -194,7 +194,8 @@ class AutomatedTrader:
                 flags=re.IGNORECASE,
             )
         if extractedData == None:
-            logger.error(f"Failed to extract incoming request data{self.req}")
+            logger.error(f"Failed to extract incoming request data: {self.req}")
+            raise Exception(f"Failed to extract incoming request data: {self.req}")
             # return Response(status=500)
         elif len(extractedData.groups()) == 3:
             self.data = {
