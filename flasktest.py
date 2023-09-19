@@ -1,4 +1,5 @@
 from flask import Flask, request, Response
+from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import (
     MarketOrderRequest,
@@ -25,25 +26,24 @@ handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(handler)
 
-
 def getKeys(account):
+    load_dotenv(override=True)
     # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
-    paperTrading = {
-        "api_key": os.environ.get("Alpaca_API_KEY"),
-        "secret_key": os.environ.get("Alpaca_SECRET_KEY"),
-        "paper": True,
-    }
-
-    # Real money trading
-    realTrading = {
-        "api_key": os.environ.get("Alpaca_API_KEY-real"),
-        "secret_key": os.environ.get("Alpaca_SECRET-real"),
-        "paper": False,
-    }
-
     if account == "paperTrading":
+        # Paper trading
+        paperTrading = {
+            "api_key": os.environ.get("Alpaca_API_KEY"),
+            "secret_key": os.environ.get("Alpaca_SECRET_KEY"),
+            "paper": True,
+        }
         account = paperTrading
     elif account == "realTrading":
+        # Real money trading
+        realTrading = {
+            "api_key": os.environ.get("Alpaca_API_KEY-real"),
+            "secret_key": os.environ.get("Alpaca_SECRET-real"),
+            "paper": False,
+        }
         account = realTrading
     else:
         raise NameError(
@@ -182,7 +182,7 @@ class AutomatedTrader:
         # requests parsed for either Machine Learning: Lorentzian Classification or custom alerts (noted in documentation how to setup).
         if self.req[:3] == "LDC":
             extractedData = re.search(
-                # regex 
+                # regex
                 r"(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]",
                 self.req,
                 flags=re.IGNORECASE,
