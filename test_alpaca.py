@@ -181,9 +181,6 @@ class TestAlpaca(unittest.TestCase):
         self.paperClient.setOrders()
         self.assertEqual(type(self.paperClient.options["orders"]), list)
 
-    # def test_positions(self):
-    #   self.result.setPosition()
-
     def test_balance(self):
         result = AutomatedTrader(
             **paperTrading,
@@ -226,7 +223,6 @@ class TestAlpaca(unittest.TestCase):
         result.setData()
         result.setPosition()
         result.createOrder()
-        # time.sleep(5)
 
     def test_createMarketOrderSell(self):
         result = AutomatedTrader(
