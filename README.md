@@ -1,6 +1,6 @@
-# TradingView-Alpaca-alerts
+# TradingView-Alpaca-Bridge
 
-A python program that receives alerts from TradingView (indicators and strategies) and creates buy/sell orders on Alpaca with real and paper accounts.
+A python program that receives alerts from TradingView (indicators and strategies) and creates buy/sell orders on Alpaca with real and paper accounts. This allows for fully automated trading strategy testing and analysis.
 
 **Operation:**
 
