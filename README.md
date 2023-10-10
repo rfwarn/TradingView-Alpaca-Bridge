@@ -6,6 +6,7 @@ A python program that receives alerts from TradingView (indicators and strategie
 
 - Uses TradingView webhook. Can use ngrok, cloud service, etc. to connect webhook to server.
   - Add the following to the beginning of a strategy/indicator alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}} `...
+- Sets position size by incoming price from alpaca and settings (I like it this way to more accurately use backtesting in tradingview without having to worry about a wrong setting on that end).
 - Stop loss and other similar features should be handled in pine script.
 - Cancels any open order for the specified stock if another order is received then processes new order.
   - Buying 
