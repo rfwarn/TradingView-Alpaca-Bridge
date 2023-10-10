@@ -7,7 +7,7 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
-from alpaca.trading.models import Position
+# from alpaca.trading.models import Position
 import os, logging, re, json, time
 
 # Create a logger
@@ -25,6 +25,7 @@ handler.setFormatter(formatter)
 
 # Add the handler to the logger
 logger.addHandler(handler)
+
 
 def getKeys(account):
     load_dotenv(override=True)
@@ -270,7 +271,7 @@ class AutomatedTrader:
             else 0
         )
 
-        # Setup for open/close/bear/bull/short/long
+        # Setup for buy/sell/open/close/bear/bull/short/long
         if self.data["action"] == "Open" and self.data["position"] == "Short":
             side = OrderSide.SELL
             # Close if shorting not enabled. Need to adjust for positive and negative positions. Done?
@@ -289,7 +290,7 @@ class AutomatedTrader:
                 )
                 amount = posQty
             elif self.options["short"] and posQty > 0:
-                # Can't short with positions so need to figure out how to sell then short.
+                # Can't short with long positions so need to figure out how to sell to 0 then short and vice versa.
                 amount = posQty
             elif self.options["short"] and posQty == 0:
                 pass
@@ -355,7 +356,7 @@ class AutomatedTrader:
 
         # Setup buy/sell order
 
-        # market order, limit set to False
+        # market order if limit setting set to False
         if not self.options["limit"]:
             order_data = MarketOrderRequest(
                 symbol=self.data["stock"],  # "MSFT"
@@ -363,7 +364,7 @@ class AutomatedTrader:
                 side=side,
                 time_in_force=TimeInForce.GTC,
             )
-        # Limit order, limit set to True
+        # Limit order
         elif self.options["limit"]:
             # Predefined price to override limitamt with limitPerc*price
             if self.data["price"] > self.options["limitThreshold"]:
@@ -393,27 +394,28 @@ class AutomatedTrader:
             self.order_data
         except AttributeError:
             return
+        # escape and don't actually submit order if not enabled. For debugging/testing purposes.
         if not self.options["enabled"]:
-            # escape and don't actually submit order if not enabled. For debugging/testing purposes.
             logger.debug(
                 f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return
-        # Market order
+        # Submit order
         self.order = self.client.submit_order(self.order_data)
         self.verifyOrder()
         # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
     def verifyOrder(self, order=None):
+        # Verify order exited in one of 3 ways (cancel, fail, fill).
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
         cancelTime = 30
         now = time.time()
         id = self.order.client_order_id
         while (
-            self.order.filled_at == None
-            and self.order.failed_at == None
-            and self.order.canceled_at == None
+            self.order.filled_at is None
+            and self.order.failed_at is None
+            and self.order.canceled_at is None
         ):
             if time.time() - now > maxTime:
                 self.cancelOrderById(self.order.id.hex)
@@ -428,15 +430,15 @@ class AutomatedTrader:
                 break
             self.order = self.client.get_order_by_client_id(id)
             time.sleep(1)
-        if self.order.canceled_at != None:
+        if self.order.canceled_at is not None:
             logger.debug(
                 f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-        elif self.order.failed_at != None:
+        elif self.order.failed_at is not None:
             logger.warn(
                 f'Order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-        elif self.order.filled_at != None:
+        elif self.order.filled_at is not None:
             logger.info(
                 f'Order filled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
