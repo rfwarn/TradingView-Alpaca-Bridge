@@ -1,4 +1,4 @@
-from flasktest import AutomatedTrader, filePath, getKeys
+from AlpacaTVBridge import AutomatedTrader, filePath, getKeys
 import unittest, os, json
 
 paperTrading = getKeys("paperTrading")
@@ -39,19 +39,19 @@ options = {
 }
 
 market = {
-    "Bull": "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "Bear": "LDC Kernel Bearish \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "Open": "LDC Open Long \xe2\x96\xb2 | MSFT@327.30 | (1)",
-    "OpenCLSK": "LDC Open Long \xe2\x96\xb2 | CLSK@3.83 | (1)",
-    "OpenFCEL": "LDC Open Long \xe2\x96\xb2 | FCEL@23.30 | (1)",
-    "Close": "LDC Close Short \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "Short": "LDC Open Short \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "ShortFCEL": "LDC Open Short \xe2\x96\xb2 | FCEL@2.47 | (1)",
-    "ShortMSFT": "LDC Open Short \xe2\x96\xb2 | MSFT@327.30 | (1)",
-    "Long": "LDC Close Long \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "LongFCEL": "LDC Close Long \xe2\x96\xb2 | FCEL@23.30 | (1)",
-    "Position": "LDC Open Position \xe2\x96\xb2 | CLSK@4.015 | (1)",
-    "CPositionNVDA": "LDC Close Position  \xe2\x96\xb2\xe2\x96\xbc | NVDA@[386.78] | (1)",
+    "Bull": "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "Bear": "LDC Kernel Bearish \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "Open": "LDC Open Long \xe2\x96\xb2 | MSFT@327.30 | (1) TEST",
+    "OpenCLSK": "LDC Open Long \xe2\x96\xb2 | CLSK@3.83 | (1) TEST",
+    "OpenFCEL": "LDC Open Long \xe2\x96\xb2 | FCEL@23.30 | (1) TEST",
+    "Close": "LDC Close Short \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "Short": "LDC Open Short \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "ShortFCEL": "LDC Open Short \xe2\x96\xb2 | FCEL@2.47 | (1) TEST",
+    "ShortMSFT": "LDC Open Short \xe2\x96\xb2 | MSFT@327.30 | (1) TEST",
+    "Long": "LDC Close Long \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "LongFCEL": "LDC Close Long \xe2\x96\xb2 | FCEL@23.30 | (1) TEST",
+    "Position": "LDC Open Position \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "CPositionNVDA": "LDC Close Position  \xe2\x96\xb2\xe2\x96\xbc | NVDA@[386.78] | (1) TEST",
 }
 
 
@@ -80,7 +80,7 @@ class TestAlpaca(unittest.TestCase):
         with self.assertRaises(Exception):
             AutomatedTrader(
                 **paperTrading,
-                req="order sell | MSFT@337.57 | ",
+                req="order sell | MSFT@337.57 | TEST",
                 newOptions={"enabled": True, "newVal": True}
             )
 
@@ -95,7 +95,7 @@ class TestAlpaca(unittest.TestCase):
         # Testing of the different predefined alert types.
         result = AutomatedTrader(
             **paperTrading,
-            req="order sell | MSFT@337.57 | ",
+            req="order sell | MSFT@337.57 | TEST",
             newOptions={"enabled": False}
         )
         result.setData()
@@ -107,7 +107,7 @@ class TestAlpaca(unittest.TestCase):
     def test_data2(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order buy | MSFT@337.57 | ",
+            req="order buy | MSFT@337.57 | TEST",
             newOptions={"enabled": False}
         )
         result.setData()
@@ -217,7 +217,7 @@ class TestAlpaca(unittest.TestCase):
     def test_createMarketOrderBuy(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order buy | CLSK@5.965 | Strat buy",
+            req="order buy | CLSK@5.965 | Strat buy TEST",
             newOptions={"enabled": True, "limit": False}
         )
         result.setData()
@@ -227,7 +227,7 @@ class TestAlpaca(unittest.TestCase):
     def test_createMarketOrderSell(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order sell | CLSK@5.965 | Close position",
+            req="order sell | CLSK@5.965 | Close position TEST",
             newOptions={"enabled": True, "limit": False}
         )
         result.setData()
@@ -238,7 +238,7 @@ class TestAlpaca(unittest.TestCase):
         with self.assertRaises(Exception):
             result = AutomatedTrader(
                 **paperTrading,
-                req="123",
+                req="123 TEST",
                 newOptions={"enabled": True, "limit": False}
             )
             result.setData()
