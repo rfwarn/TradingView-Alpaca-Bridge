@@ -62,17 +62,23 @@ def filePath():
 
 # Pointer for the type you want to use (real/paper).
 account = getKeys(options["using"])
-# Load settings
-settings = options["paperTrading"]
-if options["using"] != "paperTrading":
-    for i in options["realTrading"].keys():
-        try:
-            settings[i]
-        except:
-            err = f"realTrading/paperTrading setting name mismatch: {i}. Please fix the spelling in realTrading"
-            raise Exception(err)
-    settings.update(options[options["using"]])
 
+
+# Load settings
+def loadSettings(paper, real, using):
+    settings = paper
+    if using != "paperTrading":
+        for i in real.keys():
+            try:
+                settings[i]
+            except:
+                err = f"realTrading/paperTrading setting name mismatch: {i}. Please fix the spelling in realTrading"
+                raise Exception(err)
+        settings.update(options[options["using"]])
+    return settings
+
+
+settings = loadSettings(options["paperTrading"], options["realTrading"], options["using"])
 
 app = Flask(__name__)
 
@@ -150,7 +156,7 @@ class AutomatedTrader:
             # Maxtime in seconds before canceling an order
             "maxTime": 10,
         }
-        # Use settings if they were imported successfully.
+        # Use settings if they were imported successfully. More of a debug test since it fails if it's not there and it should be there.
         if settings:
             self.options = settings
         # Count the items in options and if newOptions changes this raise an exception.
@@ -261,7 +267,7 @@ class AutomatedTrader:
             self.options["balance"] = 100000
         # Check for negative balance
         elif self.options["balance"] < 0:
-            logger.warn(f'Negative balance: {self.options["balance"]}')
+            logger.warning(f'Negative balance: {self.options["balance"]}')
             self.options["balance"] = 0
 
         # shares to buy in whole numbers
@@ -479,8 +485,8 @@ class AutomatedTrader:
             elif time.time() - now > totalMaxTime:
                 self.cancelOrderById(order.id.hex)
                 # failsafe to exit loop
-                logger.warn(
-                    f'Order exeeded {totalMaxTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                logger.warning(
+                    f'Order exeeded totalMaxTime of {totalMaxTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
                 # break
                 return True
@@ -493,7 +499,7 @@ class AutomatedTrader:
             )
             return True
         elif order.failed_at is not None:
-            logger.warn(
+            logger.warning(
                 f'Order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return False

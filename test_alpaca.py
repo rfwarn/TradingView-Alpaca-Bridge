@@ -1,50 +1,55 @@
-from AlpacaTVBridge import AutomatedTrader, filePath, getKeys
+from AlpacaTVBridge import AutomatedTrader, filePath, getKeys, loadSettings
+from settings import options
 import unittest, os, json
 
 paperTrading = getKeys("paperTrading")
 realTrading = getKeys("realTrading")
 path = filePath()
 
-options = {
-    # Enable/disable shorting. Not fully implemented yet.
-    # Alert(s) needs to say short and you have to close any long positions first.
-    "short": False,
-    # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
-    # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
-    # Behaves differently when testMode is enabled.
-    "buyPerc": 0.2,
-    # Balance is set in the function setBalance().
-    "balance": 0,
-    # Not used
-    "buyBal": 0,
-    # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
-    "positions": [],
-    # Retrieves open orders is there are any for the symbol requested.
-    "orders": [],
-    # Gets all the open orders.
-    "allOrders": [],
-    # Testmode sets the balance to a predetermined amount set in createOrder.
-    # Used to not factor in remaining balance * buyPerc after positions are opened.
-    "testMode": True,
-    # enabled will allow submission of orders.
-    "enabled": True,
-    # Not used?
-    "req": "",
-    # Setting to True will impose a predefined limit for trades
-    "limit": True,
-    # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
-    "limitamt": 0.04,
-    # limit percent for everything above a certain amount which is predefined for now below.
-    "limitPerc": 0.0005,
-}
+# options = {
+#     # Enable/disable shorting. Not fully implemented yet.
+#     # Alert(s) needs to say short and you have to close any long positions first.
+#     "short": False,
+#     # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
+#     # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
+#     # Behaves differently when testMode is enabled.
+#     "buyPerc": 0.2,
+#     # Balance is set in the function setBalance().
+#     "balance": 0,
+#     # Not used
+#     "buyBal": 0,
+#     # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
+#     "positions": [],
+#     # Retrieves open orders is there are any for the symbol requested.
+#     "orders": [],
+#     # Gets all the open orders.
+#     "allOrders": [],
+#     # Testmode sets the balance to a predetermined amount set in createOrder.
+#     # Used to not factor in remaining balance * buyPerc after positions are opened.
+#     "testMode": True,
+#     # enabled will allow submission of orders.
+#     "enabled": True,
+#     # Not used?
+#     "req": "",
+#     # Setting to True will impose a predefined limit for trades
+#     "limit": True,
+#     # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
+#     "limitamt": 0.04,
+#     # limit percent for everything above a certain amount which is predefined for now below.
+#     "limitPerc": 0.0005,
+# }
+limitTests = (
+    "order sell | MSFT@433.02 | Directional Movement Index",
+    "order buy | MSFT@227.52 | Directional Movement Index",
+)
 
-market = {
+marketLDC = {
     "Bull": "LDC Kernel Bullish \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
     "Bear": "LDC Kernel Bearish \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
     "Open": "LDC Open Long \xe2\x96\xb2 | MSFT@327.30 | (1) TEST",
     "OpenCLSK": "LDC Open Long \xe2\x96\xb2 | CLSK@3.83 | (1) TEST",
     "OpenFCEL": "LDC Open Long \xe2\x96\xb2 | FCEL@23.30 | (1) TEST",
-    "Close": "LDC Close Short \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
+    "Close": "LDC Close Short \xe2\x96\xb2 | CLSK@4.01 | (1) TEST",
     "Short": "LDC Open Short \xe2\x96\xb2 | CLSK@4.015 | (1) TEST",
     "ShortFCEL": "LDC Open Short \xe2\x96\xb2 | FCEL@2.47 | (1) TEST",
     "ShortMSFT": "LDC Open Short \xe2\x96\xb2 | MSFT@327.30 | (1) TEST",
@@ -58,7 +63,7 @@ market = {
 class TestAlpaca(unittest.TestCase):
     # realClient = AutomatedTrader(**realTrading, newOptions={})
     paperClient = AutomatedTrader(
-        **paperTrading, req=market["Long"], newOptions={"enabled": False}
+        **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
     )
 
     # For debugging
@@ -67,13 +72,15 @@ class TestAlpaca(unittest.TestCase):
 
     def test_settings(self):
         # Verify settings file can be loaded properly
-        with open(path + os.sep + "settings.json") as f:
-            settings = json.load(f)
-            setcheck = [settings["paperTrading"], settings["realTrading"]]
+        setcheck = [options["paperTrading"]]
         for x in setcheck:
             self.assertEqual(type(x["testMode"]), bool)
             self.assertEqual(type(x["orders"]), list)
             self.assertEqual(type(x["buyPerc"]), float)
+        optionsChk = options["realTrading"].copy()
+        optionsChk["asdf"] = "testfail"
+        with self.assertRaises(Exception):
+            loadSettings(options["paperTrading"], optionsChk, "realTrading")
 
     def test_extraOptions(self):
         # Test for typos in newOptions which would have unintended effects.
@@ -118,7 +125,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data3(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Bear"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Bear"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bear")
@@ -128,7 +135,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data4(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Bull"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Bull"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bull")
@@ -138,7 +145,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data5(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Open"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Open"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -148,7 +155,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data6(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Long"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
@@ -158,7 +165,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data7(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Short"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Short"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -168,13 +175,13 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data8(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Close"], newOptions={"enabled": False}
+            **paperTrading, req=marketLDC["Close"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
         self.assertEqual(result.data["position"], "Short")
         self.assertEqual(result.data["stock"], "CLSK")
-        self.assertEqual(result.data["price"], 4.015)
+        self.assertEqual(result.data["price"], 4.01)
 
     def test_orders(self):
         self.paperClient.setData()
@@ -184,33 +191,36 @@ class TestAlpaca(unittest.TestCase):
     def test_balance(self):
         result = AutomatedTrader(
             **paperTrading,
-            req=market["Close"],
+            req=marketLDC["Close"],
             newOptions={"enabled": False, "testMode": True}
         )
         result.setBalance()
 
     def test_createLimitOrder(self):
         result = AutomatedTrader(
-            **paperTrading, req=market["Close"], newOptions={"enabled": False, "limit": True}
+            **paperTrading,
+            req=marketLDC["OpenFCEL"],
+            newOptions={"enabled": False, "limit": True}
         )
+        limitPrice = 23.3 + options["paperTrading"]["limitamt"]
         result.setData()
         result.setPosition()
         result.createOrder()
-        self.assertEqual(result.order_data.limit_price, 4.05)
-        self.assertEqual(result.order_data.qty, 4981.0)
-        self.assertEqual(result.order_data.symbol, "CLSK")
+        self.assertEqual(result.order_data.limit_price, limitPrice)
+        self.assertEqual(result.order_data.qty, 858.0)
+        self.assertEqual(result.order_data.symbol, "FCEL")
 
     def test_createMarketOrder(self):
         result = AutomatedTrader(
             **paperTrading,
-            req=market["Close"],
+            req=marketLDC["OpenFCEL"],
             newOptions={"enabled": False, "limit": False}
         )
         result.setData()
         result.setPosition()
         result.createOrder()
-        self.assertEqual(result.order_data.qty, 4981.0)
-        self.assertEqual(result.order_data.symbol, "CLSK")
+        self.assertEqual(result.order_data.qty, 858.0)
+        self.assertEqual(result.order_data.symbol, "FCEL")
         with self.assertRaises(AttributeError):
             result.order_data.limit_price
 
@@ -242,6 +252,29 @@ class TestAlpaca(unittest.TestCase):
                 newOptions={"enabled": True, "limit": False}
             )
             result.setData()
+
+    # maxTimeout failsafes
+    # def test_limitBuyTimeoutCancel(self):
+    #     result = AutomatedTrader(
+    #         **paperTrading,
+    #         req=limitTests[1],
+    #         newOptions={"enabled": True, "limit": True, "buyTimeout": "Cancel"}
+    #     )
+
+    # def test_limitBuyTimeoutMarket(self):
+    #     result = AutomatedTrader(
+    #         **paperTrading,
+    #         req=limitTests[1],
+    #         newOptions={"enabled": True, "limit": True, "buyTimeout": "Market"}
+    #     )
+
+    # def test_limitSellTimeoutMarket(self):
+    #     result = AutomatedTrader(
+    #         **paperTrading,
+    #         req=limitTests[1],
+    #         newOptions={"enabled": True, "limit": True, "sellTimeout": "Market"}
+    #     )
+
 
 if __name__ == "__main__":
     unittest.main()
