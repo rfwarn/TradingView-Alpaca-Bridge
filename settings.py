@@ -35,9 +35,9 @@ options = {
         # limit percent for everything above a certain amount which is predefined for now below.
         "limitPerc": 0.0008,
         # Maxtime in seconds before first timeout for an order.
-        "maxTime": 8,
+        "maxTime": 5,
         # Total max time hard set to 30 seconds
-        "totalMaxTime": 15,
+        "totalMaxTime": 8,
         # Buy and sell cancel preferences after max time.
         # Failsafe for limit order. Options are Cancel, Market.
         # TODO: Implement kill or fill in main program.

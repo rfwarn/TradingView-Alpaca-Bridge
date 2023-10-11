@@ -232,11 +232,7 @@ class AutomatedTrader:
 
     def setOrders(self):
         # get open orders
-        self.options["allOrders"] = self.client.get_orders()
-        for x in self.options["allOrders"]:
-            print(x.symbol, x.qty)
         stock = GetOrdersRequest(symbols=[self.data["stock"]])
-        # self.options['stockOrders'] = self.client.get_orders(stock)
         self.options["orders"] = self.client.get_orders(stock)
 
     def setPosition(self):
@@ -450,7 +446,6 @@ class AutomatedTrader:
                     # verify canceled order
                     if not self.verifyOrder(order, True):
                         err = "cancel order failed"
-                        print(err)
                         logger.debug(
                             f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                         )
@@ -486,14 +481,12 @@ class AutomatedTrader:
                             return True
                         else:
                             err = "market order failed"
-                            print(err)
                             logger.debug(
                                 f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                             )
                             return False
                     else:
                         err = "cancel order failed"
-                        print(err)
                         logger.debug(
                             f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                         )
@@ -518,7 +511,6 @@ class AutomatedTrader:
                     return False
                 else:
                     err = f'maxTimeout order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
-                    print(err)
                     logger.debug(
                         f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                     )
