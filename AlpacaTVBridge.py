@@ -78,7 +78,9 @@ def loadSettings(paper, real, using):
     return settings
 
 
-settings = loadSettings(options["paperTrading"], options["realTrading"], options["using"])
+settings = loadSettings(
+    options["paperTrading"], options["realTrading"], options["using"]
+)
 
 app = Flask(__name__)
 
@@ -409,7 +411,7 @@ class AutomatedTrader:
         # escape and don't actually submit order if not enabled. For debugging/testing purposes.
         if not self.options["enabled"]:
             logger.debug(
-                f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return
         # Submit order
@@ -434,48 +436,66 @@ class AutomatedTrader:
         ):
             if time.time() - now > maxTime and not timeout:
                 logger.debug(
-                    f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
+                # Cancels order after initial maxtime. Determined in settings
                 if (self.options["buyTimeout"] == "Cancel" and orderSideBuy) or (
                     self.options["sellTimeout"] == "Cancel" and orderSideSell
                 ):
+                    # cancel pending order
                     self.cancelOrderById(order.id.hex)
                     # Refreshes status of order before verifying to speed up the process.
                     order = self.client.get_order_by_client_id(id)
                     timeout = True
+                    # verify canceled order
                     if not self.verifyOrder(order, True):
                         err = "cancel order failed"
                         print(err)
                         logger.debug(
-                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                         )
+                        raise Exception(err)
+                    else:
+                        # competed at this point and returns True to indicate cancel was successful
+                        return True
+                # Changes order to market after initial maxtime. Determined in settings
                 elif (self.options["buyTimeout"] == "Market" and orderSideBuy) or (
                     self.options["sellTimeout"] == "Market" and orderSideSell
                 ):
+                    # cancel pending order
                     self.cancelOrderById(order.id.hex)
                     # Refreshes status of order before verifying to speed up the process.
                     order = self.client.get_order_by_client_id(id)
                     timeout = True
+                    # verify canceled order
                     if self.verifyOrder(order, True):
-                        print("verified canceled order")
+                        # Once order is canceled, find how many didn't get filled for new market order
                         amount = float(order.qty) - float(order.filled_qty)
+                        # Set the new order. This will also set the new self.order_data based on the prior order info, the updated amount left to buy/sell, and False for limit to make it a market order.
                         self.orderType(amount, order.side, False)
+                        # Submit the order and udpate the local variable.
                         order = self.client.submit_order(self.order_data)
+                        logger.debug(
+                                f'Timeout market order placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                            )
+                        # Verify new order completion.
                         if self.verifyOrder(order, True):
                             logger.debug(
-                                f'Timeout market order succeeded for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                                f'Timeout market order succeeded for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                             )
+                            return True
                         else:
                             err = "market order failed"
                             print(err)
                             logger.debug(
-                                f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                                f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                             )
+                            return False
                     else:
                         err = "cancel order failed"
                         print(err)
                         logger.debug(
-                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                         )
                         raise Exception(err)
                 else:
@@ -486,32 +506,45 @@ class AutomatedTrader:
                 self.cancelOrderById(order.id.hex)
                 # failsafe to exit loop
                 logger.warning(
-                    f'Order exeeded totalMaxTime of {totalMaxTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    f'Cancelling, order exeeded totalMaxTime ({totalMaxTime} seconds) for: action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
-                # break
-                return True
+                # Refreshes status of order before verifying to speed up the process.
+                order = self.client.get_order_by_client_id(id)
+                timeout = True
+                if self.verifyOrder(order, True):
+                    logger.debug(
+                        f'maxTimeout order successfully canceled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    )
+                    return False
+                else:
+                    err = f'maxTimeout order cancel failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    print(err)
+                    logger.debug(
+                        f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    )
+                    return False
             time.sleep(1)
             order = self.client.get_order_by_client_id(id)
 
         if order.canceled_at is not None:
             logger.debug(
-                f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return True
         elif order.failed_at is not None:
             logger.warning(
-                f'Order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                f'Order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return False
         elif order.filled_at is not None:
             logger.info(
-                f'Order filled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                f'Order filled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return True
 
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:
-            value = f'Trading not enable, order not canceled for: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}'
+            value = f'Trading not enabled, order not canceled for: {self.data["stock"]}, {self.data["action"]} {self.order_data.type._value_}, {self.data["price"]}'
             logger.debug(value)
             return value
         elif id != None:

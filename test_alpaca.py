@@ -65,7 +65,7 @@ class TestAlpaca(unittest.TestCase):
     paperClient = AutomatedTrader(
         **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
     )
-
+    fastTiming = {"maxTime": 3, "totalMaxTime": 4}
     # For debugging
     # def setUp(self):
     #   print("In method", self._testMethodName)
@@ -228,7 +228,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             **paperTrading,
             req="order buy | CLSK@5.965 | Strat buy TEST",
-            newOptions={"enabled": True, "limit": False}
+            newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", **self.fastTiming}
         )
         result.setData()
         result.setPosition()
@@ -238,7 +238,27 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             **paperTrading,
             req="order sell | CLSK@5.965 | Close position TEST",
-            newOptions={"enabled": True, "limit": False}
+            newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+
+    def test_createLimitOrderBuy(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order buy | CLSK@5.965 | Strat buy TEST",
+            newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+
+    def test_createLimitOrderSell(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order sell | CLSK@5.965 | Close position TEST",
+            newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", **self.fastTiming}
         )
         result.setData()
         result.setPosition()

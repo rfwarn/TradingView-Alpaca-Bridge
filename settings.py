@@ -26,7 +26,7 @@ options = {
         "testMode": True,
         # enabled will allow submission of orders.
         "enabled": True,
-        # Setting to True will impose a predefined limit for trades
+        # Setting to True will impose a predefined limit for trades. Will make a market order if set to False
         "limit": True,
         # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
         "limitamt": 0.05,
