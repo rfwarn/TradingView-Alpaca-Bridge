@@ -7,8 +7,8 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
-# from alpaca.trading.models import Position
 import os, logging, re, json, time
+# from alpaca.trading.models import Position
 
 # Create a logger
 logger = logging.getLogger("AlpacaLogger")
@@ -355,8 +355,7 @@ class AutomatedTrader:
             return
 
         # Setup buy/sell order
-
-        # market order if limit setting set to False
+        # Market order if "limit" setting set to False
         if not self.options["limit"]:
             order_data = MarketOrderRequest(
                 symbol=self.data["stock"],  # "MSFT"
@@ -364,7 +363,7 @@ class AutomatedTrader:
                 side=side,
                 time_in_force=TimeInForce.GTC,
             )
-        # Limit order
+        # Limit order if "limit" setting set to True
         elif self.options["limit"]:
             # Predefined price to override limitamt with limitPerc*price
             if self.data["price"] > self.options["limitThreshold"]:
@@ -406,7 +405,7 @@ class AutomatedTrader:
         # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
     def verifyOrder(self, order=None):
-        # Verify order exited in one of 3 ways (cancel, fail, fill).
+        # Verify order exited in 1 of 3 ways (cancel, fail, fill).
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
         cancelTime = 30
@@ -428,8 +427,8 @@ class AutomatedTrader:
                     f'Order exeeded {cancelTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
                 break
-            self.order = self.client.get_order_by_client_id(id)
             time.sleep(1)
+            self.order = self.client.get_order_by_client_id(id)
         if self.order.canceled_at is not None:
             logger.debug(
                 f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
