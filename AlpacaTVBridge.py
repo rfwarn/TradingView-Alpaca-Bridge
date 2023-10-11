@@ -7,7 +7,9 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
+from settings import options
 import os, logging, re, json, time
+
 # from alpaca.trading.models import Position
 
 # Create a logger
@@ -58,15 +60,19 @@ def filePath():
     return os.path.dirname(__file__)
 
 
-# Load config. If file isn't found, print error in console and use defaults in class.
-try:
-    with open(filePath() + os.sep + "settings.json") as f:
-        settings = json.load(f)
-        # Pointer for the type you want to use (real/paper).
-        account = getKeys(settings["using"])
-        settings = settings[settings["using"]]
-except FileNotFoundError:
-    print("settings.json file not found, using internal settings.")
+# Pointer for the type you want to use (real/paper).
+account = getKeys(options["using"])
+# Load settings
+settings = options["paperTrading"]
+if options["using"] != "paperTrading":
+    for i in options["realTrading"].keys():
+        try:
+            settings[i]
+        except:
+            err = f"realTrading/paperTrading setting name mismatch: {i}. Please fix the spelling in realTrading"
+            raise Exception(err)
+    settings.update(options[options["using"]])
+
 
 app = Flask(__name__)
 
@@ -105,8 +111,8 @@ def respond():
 
 
 class AutomatedTrader:
-    """Trader client and functions for buying, selling, and validating of orders.
-    'req' is the request that needs to be processed.
+    """Trader client and functions for buying, selling, and validating of
+    orders.'req' is the request that needs to be processed.
     """
 
     def __init__(self, api_key, secret_key, paper=True, req="", newOptions={}):
@@ -133,8 +139,6 @@ class AutomatedTrader:
             "testMode": True,
             # enabled will allow submission of orders.
             "enabled": True,
-            # Not used?
-            "req": "",
             # Setting to True will impose a predefined limit for trades
             "limit": True,
             # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >limitThreshold.
@@ -180,7 +184,8 @@ class AutomatedTrader:
         return TradingClient(self.api_key, self.secret_key, paper=self.paper)
 
     def setData(self):
-        # requests parsed for either Machine Learning: Lorentzian Classification or custom alerts (noted in documentation how to setup).
+        # requests parsed for either Machine Learning: Lorentzian
+        # Classification or custom alerts (noted in documentation how to setup).
         if self.req[:3] == "LDC":
             extractedData = re.search(
                 # regex
@@ -239,7 +244,7 @@ class AutomatedTrader:
     def setBalance(self):
         # set balance at beginning and after each transaction
         cash = float(self.client.get_account().cash)
-        nMBP = float(self.client.get_account().non_marginable_buying_power)
+        # nMBP = float(self.client.get_account().non_marginable_buying_power)
         acctBal = cash
         # acctBal = cash - (cash-nMBP)*2
         # acctBal = float(self.client.get_account().cash)
@@ -247,7 +252,7 @@ class AutomatedTrader:
 
     def createOrder(self):
         # Setting papameters for market order
-        # Clear uncompleted open orders. Shouldn't be any unless it's after hours...
+        # Clear uncompleted open orders. Shouldn't be any unless trading is unavailable...
         if len(self.options["orders"]) > 0:
             self.cancelOrderById()
 
@@ -256,7 +261,7 @@ class AutomatedTrader:
             self.options["balance"] = 100000
         # Check for negative balance
         elif self.options["balance"] < 0:
-            logger.debug(f'Negative balance: {self.options["balance"]}')
+            logger.warn(f'Negative balance: {self.options["balance"]}')
             self.options["balance"] = 0
 
         # shares to buy in whole numbers
@@ -353,10 +358,13 @@ class AutomatedTrader:
                 f'<0 Orders requested: {self.data["stock"]}, {self.data["action"]}, {self.data["price"]}, amount: {amount}'
             )
             return
+        self.orderType(amount, side, self.options["limit"])
+        self.submitOrder()
 
+    def orderType(self, amount, side, limit):
         # Setup buy/sell order
         # Market order if "limit" setting set to False
-        if not self.options["limit"]:
+        if not limit:
             order_data = MarketOrderRequest(
                 symbol=self.data["stock"],  # "MSFT"
                 qty=amount,  # 100
@@ -364,7 +372,7 @@ class AutomatedTrader:
                 time_in_force=TimeInForce.GTC,
             )
         # Limit order if "limit" setting set to True
-        elif self.options["limit"]:
+        elif limit:
             # Predefined price to override limitamt with limitPerc*price
             if self.data["price"] > self.options["limitThreshold"]:
                 self.options["limitamt"] = (
@@ -386,7 +394,6 @@ class AutomatedTrader:
                 time_in_force=TimeInForce.GTC,
             )
         self.order_data = order_data
-        self.submitOrder()
 
     def submitOrder(self):
         try:
@@ -401,46 +408,100 @@ class AutomatedTrader:
             return
         # Submit order
         self.order = self.client.submit_order(self.order_data)
-        self.verifyOrder()
+        self.verifyOrder(self.order)
         # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
-    def verifyOrder(self, order=None):
+    def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
-        cancelTime = 30
+        totalMaxTime = self.options["totalMaxTime"]
+        orderSideBuy = str(order.side) == "OrderSide.BUY"
+        orderSideSell = str(order.side) == "OrderSide.SELL"
         now = time.time()
-        id = self.order.client_order_id
+        id = order.client_order_id
+        # While loop that checks the order status every 1 second.
         while (
-            self.order.filled_at is None
-            and self.order.failed_at is None
-            and self.order.canceled_at is None
+            order.filled_at is None
+            and order.failed_at is None
+            and order.canceled_at is None
         ):
-            if time.time() - now > maxTime:
-                self.cancelOrderById(self.order.id.hex)
+            if time.time() - now > maxTime and not timeout:
                 logger.debug(
                     f'Order exeeded max time ({maxTime} seconds) for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
-            elif time.time() - now > cancelTime:
+                if (self.options["buyTimeout"] == "Cancel" and orderSideBuy) or (
+                    self.options["sellTimeout"] == "Cancel" and orderSideSell
+                ):
+                    self.cancelOrderById(order.id.hex)
+                    # Refreshes status of order before verifying to speed up the process.
+                    order = self.client.get_order_by_client_id(id)
+                    timeout = True
+                    if not self.verifyOrder(order, True):
+                        err = "cancel order failed"
+                        print(err)
+                        logger.debug(
+                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                        )
+                elif (self.options["buyTimeout"] == "Market" and orderSideBuy) or (
+                    self.options["sellTimeout"] == "Market" and orderSideSell
+                ):
+                    self.cancelOrderById(order.id.hex)
+                    # Refreshes status of order before verifying to speed up the process.
+                    order = self.client.get_order_by_client_id(id)
+                    timeout = True
+                    if self.verifyOrder(order, True):
+                        print("verified canceled order")
+                        amount = float(order.qty) - float(order.filled_qty)
+                        self.orderType(amount, order.side, False)
+                        order = self.client.submit_order(self.order_data)
+                        if self.verifyOrder(order, True):
+                            logger.debug(
+                                f'Timeout market order succeeded for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                            )
+                        else:
+                            err = "market order failed"
+                            print(err)
+                            logger.debug(
+                                f'Timeout market order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                            )
+                    else:
+                        err = "cancel order failed"
+                        print(err)
+                        logger.debug(
+                            f'Order cancel failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                        )
+                        raise Exception(err)
+                else:
+                    err = "buy or sell timeout setting not found. Check the spelling in the settings and relaunch the server"
+                    logger.error(err)
+                    raise Exception(err)
+            elif time.time() - now > totalMaxTime:
+                self.cancelOrderById(order.id.hex)
                 # failsafe to exit loop
                 logger.warn(
-                    f'Order exeeded {cancelTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                    f'Order exeeded {totalMaxTime} seconds for: action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
-                break
+                # break
+                return True
             time.sleep(1)
-            self.order = self.client.get_order_by_client_id(id)
-        if self.order.canceled_at is not None:
+            order = self.client.get_order_by_client_id(id)
+
+        if order.canceled_at is not None:
             logger.debug(
                 f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-        elif self.order.failed_at is not None:
+            return True
+        elif order.failed_at is not None:
             logger.warn(
                 f'Order failed for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-        elif self.order.filled_at is not None:
+            return False
+        elif order.filled_at is not None:
             logger.info(
                 f'Order filled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
+            return True
 
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:
@@ -458,6 +519,7 @@ class AutomatedTrader:
             )
 
     def cancelAll(self):
+        # Not used
         self.canxStatus = self.client.cancel_orders()
 
 

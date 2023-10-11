@@ -12,7 +12,8 @@ live*
 __pycache__/
 build/
 dist/
-settings.py
+userSettings.py
 *.pem
 *.ppk
 *cache*/
+*.json
