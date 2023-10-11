@@ -8,11 +8,13 @@ A python program that receives alerts from TradingView (indicators and strategie
 - Uses TradingView webhook. Can use ngrok, cloud service, etc. to connect webhook to server.
   - Add the following to the beginning of a strategy/indicator alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}} `...
 - Sets position size by incoming price from alpaca and settings (I like it this way to more accurately use backtesting in tradingview without having to worry about a wrong setting on that end).
-- Stop loss and other similar features should be handled in pine script.
+- If there's already an open order, it will cancel it and place new order as long as there is no position for buying, etc. 
+- Stop loss and other similar features need to be handled in pine script.
 - Cancels any open order for the specified stock if another order is received then processes new order.
   - Buying 
     - Any open order for that stock will be canceled and a new one created.
-    - If you already have a position with that stock, no order will be placed to prevent overbuying.
+    - This help for fast market movements on limit orders or if there are other open trades placed outside this program.
+    - If you already have a position with the stock you are buying/selling, no order will be placed to prevent overbuying. No pyramiding is possible at this time with this program.
 - Checks position before shorting/going long to prevent overbuying/overselling.
 - Buy price is received from TradingView webhook for position size calculation based on user settings.
 - Great for trying strategies out with paper trading. Use at your own risk for real trading. Should work but haven't tested it much yet in real money trading. I'll update after trying it out.
@@ -27,7 +29,6 @@ A python program that receives alerts from TradingView (indicators and strategie
 **Future plans:**
 
 - Generate stock/strategy performance analysis dashboard from reports generated.
-- Implement order tracking to ensure completion or cancel.
 - Use order tracking for changing from long to short positions and vice versa.
 
 ---

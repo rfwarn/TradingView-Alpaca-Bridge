@@ -40,7 +40,6 @@ options = {
         "totalMaxTime": 8,
         # Buy and sell cancel preferences after max time.
         # Failsafe for limit order. Options are Cancel, Market.
-        # TODO: Implement kill or fill in main program.
         "buyTimeout": "Market",
         "sellTimeout": "Market",
     },
