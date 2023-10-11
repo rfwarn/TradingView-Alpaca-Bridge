@@ -15,3 +15,4 @@ dist/
 settings.py
 *.pem
 *.ppk
+*cache*/

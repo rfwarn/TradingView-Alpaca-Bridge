@@ -82,4 +82,4 @@ Real money trading keys:
       "maxTime":10
     }
 
-![](Capture.JPG)
+![](Assets/Capture.JPG)
