@@ -34,13 +34,15 @@ options = {
         "limitThreshold": 100,
         # limit percent for everything above a certain amount which is predefined for now below.
         "limitPerc": 0.0008,
+        # Enable/disable order verification. Suggested use for market orders or high frequency trading (roughly buy/sell within a minute).
+        "verifyOrders": True,
         # Maxtime in seconds before first timeout for an order.
         "maxTime": 5,
         # Total max time hard set to 30 seconds
         "totalMaxTime": 8,
         # Buy and sell cancel preferences after max time.
         # Failsafe for limit order. Options are Cancel, Market.
-        "buyTimeout": "Market",
+        "buyTimeout": "Cancel",
         "sellTimeout": "Market",
     },
     "realTrading": {

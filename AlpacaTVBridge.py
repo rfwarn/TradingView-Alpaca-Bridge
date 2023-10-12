@@ -412,7 +412,8 @@ class AutomatedTrader:
             return
         # Submit order
         self.order = self.client.submit_order(self.order_data)
-        self.verifyOrder(self.order)
+        if self.options["verifyOrders"]:
+            self.verifyOrder(self.order)
         # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
     def verifyOrder(self, order=None, timeout=False):
@@ -493,6 +494,7 @@ class AutomatedTrader:
                         raise Exception(err)
                 else:
                     err = "buy or sell timeout setting not found. Check the spelling in the settings and relaunch the server"
+                    self.cancelOrderById(order.id.hex)
                     logger.error(err)
                     raise Exception(err)
             elif time.time() - now > totalMaxTime:
