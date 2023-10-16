@@ -11,4 +11,4 @@ COPY . .
 EXPOSE 5000
 
 # CMD [ "flask", "./AlpacaTVBridge.py", "--host=0.0.0.0"]
-CMD [ "python", "./AlpacaTVBridge.py", "serve"]
+CMD [ "python", "./AlpacaTVBridge.py", "serveTV"]

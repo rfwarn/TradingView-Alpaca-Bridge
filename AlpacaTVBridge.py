@@ -562,7 +562,9 @@ if __name__ == "__main__":
     acctInfo()
     # Start the app
     try:
-        if sys.argv[1]=='serve':
+        if sys.argv[1]=='serveTV':
             serve(app, port=5000, threads=4, host='0.0.0.0')
+        else:
+            serve(app, port=5000, threads=4)
     except IndexError:
         serve(app, port=5000, threads=4)
