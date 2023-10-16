@@ -1,4 +1,5 @@
 from flask import Flask, request, Response
+from waitress import serve
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import (
@@ -8,7 +9,7 @@ from alpaca.trading.requests import (
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
 from settings import options
-import os, logging, re, json, time
+import os, logging, re, time, sys
 
 # from alpaca.trading.models import Position
 
@@ -560,4 +561,8 @@ if __name__ == "__main__":
     # Display general account info.
     acctInfo()
     # Start the app
-    app.run(port=5000, debug=False, threaded=True)
+    try:
+        if sys.argv[1]=='serve':
+            serve(app, port=5000, threads=4, host='0.0.0.0')
+    except IndexError:
+        serve(app, port=5000, threads=4)
