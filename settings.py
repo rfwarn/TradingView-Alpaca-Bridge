@@ -13,16 +13,23 @@ options = {
         "buyPerc": 0.2,
         # Balance is set in the function setBalance().
         "balance": 0,
-        # Not used
+        # TODO: allow user to set hard amount to use for trading. 0 to disable
         "buyBal": 0,
+        # Uses relative available funds (cash remaining) * the buyPerc.
+        "useRelativeBalance": 0,
+        # Enables or disables margin buying. Set to 0 to disable which will use cash only if testMode is disabled.
+        # Otherwise set to percent of margin to use (ex. )
+        "useMarinBuyingPower" : 0,
         # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
         "positions": [],
         # Retrieves open orders is there are any for the symbol requested.
         "orders": [],
         # Gets all the open orders.
         "allOrders": [],
-        # Testmode sets the balance to a predetermined amount set in createOrder.
-        # Used to not factor in remaining balance * buyPerc after positions are opened.
+        # Enable fractional trading.
+        "fractional": False,
+        # Testmode sets the balance to a predetermined amount hard set in createOrder ($100,000).
+        # Great for paper trading and accurate analysis
         "testMode": True,
         # enabled will allow submission of orders.
         "enabled": True,
