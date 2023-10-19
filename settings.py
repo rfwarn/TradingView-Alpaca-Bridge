@@ -20,14 +20,14 @@ options = {
         # Amount of margin to use. Set to 0 to disable which will use cash only. If testMode is enabled this will have no effect.
         # Otherwise set to percent of margin to use (Ex. 1 = 100% of daytrading_buying_power, 0.5 = 50%...)
         # "useMarinBuyingPower": 0,
-        # Enable fractional trading. ***Fractional orders must be DAY orders***. May add auto setting for this later.
+        # Enable fractional trading. ***Fractional orders must be market orders***. May add auto setting for this later.
         "fractional": False,
         # Testmode sets the balance to a predetermined amount hard set in createOrder ($100,000).
         # Great for paper trading and performance analysis.
         "testMode": True,
         # enabled will allow submission of orders.
         "enabled": True,
-        # Setting to True will impose a predefined limit for trades. Will make a market order if set to False
+        # Setting to True will impose a predefined limit for trades. Will make market orders if set to False.
         "limit": True,
         # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
         "limitamt": 0.05,
@@ -45,6 +45,10 @@ options = {
         # Failsafe for limit order. Options are [Cancel, Market].
         "buyTimeout": "Cancel",
         "sellTimeout": "Market",
+        # A low point for the account to stop trading. Set to 0 to disable.
+        # "minAccountStop": 0,
+        # Sell all assets once hitting the low point to prevent further loss?
+        # "minAccountSell": True,
     },
     # realTrading copies values from paperTrading and overrides any duplicates.
     # Will raise an Exception if there are items in realTrading that aren't in paperTrading.

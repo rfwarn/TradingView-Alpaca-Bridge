@@ -83,6 +83,14 @@ settings = loadSettings(
     options["paperTrading"], options["realTrading"], options["using"]
 )
 
+# Check for configuration conflict that could cause unintended buying or errors.
+if settings["enabled"] and settings["testMode"] and options["using"]=="realTrading":
+    err = "testMode and real money keys being used, exiting. Change one or the other."
+    raise Exception(err)
+elif settings["fractional"] and settings["limit"]:
+    err = "fractional and limit can't be used together, exiting. Change one or the other."
+    raise Exception(err)
+    
 app = Flask(__name__)
 
 # data examples from pine script strategy alerts:
@@ -148,13 +156,8 @@ class AutomatedTrader:
         self.paper = paper
         self.client = self.createClient()
         self.req = req
-        # Check for configuration conflict that could cause unintended buying.
-        if self.options["enabled"] and self.options["testMode"] and not self.paper:
-            err = "testMode and real money keys being used, exiting. Switch one or the other."
-            logger.error(err)
-            raise Exception(err)
         # Verify 'enabled' option is True. Used primarily for unittesting.
-        elif self.options["enabled"]:
+        if self.options["enabled"]:
             self.setData()
             self.setOrders()
             self.setPosition()
@@ -354,13 +357,14 @@ class AutomatedTrader:
 
     def orderType(self, amount, side, limit):
         # Setup buy/sell order
+        fractional = int(amount) != float(amount)
         # Market order if "limit" setting set to False
         if not limit:
             order_data = MarketOrderRequest(
                 symbol=self.data["stock"],  # "MSFT"
                 qty=amount,  # 100
                 side=side,
-                time_in_force=TimeInForce.GTC,
+                time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
             )
         # Limit order if "limit" setting set to True
         elif limit:
@@ -382,7 +386,7 @@ class AutomatedTrader:
                 ),
                 qty=amount,  # 100
                 side=side,
-                time_in_force=TimeInForce.GTC,
+                time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
             )
         self.order_data = order_data
 

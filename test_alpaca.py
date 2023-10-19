@@ -98,6 +98,13 @@ class TestAlpaca(unittest.TestCase):
                 **realTrading, req="", newOptions={"enabled": True, "testMode": True}
             )
 
+    def test_fractionalLimit(self):
+        # Test failsafe that prevents trying to place an order as a limit with fractional enabled which Alpaca does not support.
+        with self.assertRaises(Exception):
+            AutomatedTrader(
+                **realTrading, req="", newOptions={"fractional": True, "limit": True}
+            )
+
     def test_data1(self):
         # Testing of the different predefined alert types.
         result = AutomatedTrader(
@@ -200,7 +207,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             **paperTrading,
             req=marketLDC["OpenFCEL"],
-            newOptions={"enabled": False, "limit": True}
+            newOptions={"enabled": False, "limit": True, "fractional": False}
         )
         limitPrice = 23.3 + options["paperTrading"]["limitamt"]
         result.setData()
@@ -214,7 +221,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             **paperTrading,
             req=marketLDC["OpenFCEL"],
-            newOptions={"enabled": False, "limit": False}
+            newOptions={"enabled": False, "limit": False, "fractional": False}
         )
         result.setData()
         result.setPosition()
@@ -227,8 +234,9 @@ class TestAlpaca(unittest.TestCase):
     def test_createMarketOrderBuy(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order buy | CLSK@5.965 | Strat buy TEST",
-            newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", **self.fastTiming}
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            # req="order buy | CLSK@5.965 | Strat buy TEST",
+            newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", "fractional": True, **self.fastTiming}
         )
         result.setData()
         result.setPosition()
@@ -237,8 +245,9 @@ class TestAlpaca(unittest.TestCase):
     def test_createMarketOrderSell(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order sell | CLSK@5.965 | Close position TEST",
-            newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", **self.fastTiming}
+            req="order sell | MSFT@233.41 | Close position TEST",
+            # req="order sell | CLSK@5.965 | Close position TEST",
+            newOptions={"enabled": True, "limit": False, "buyTimeout": "Market", "fractional": False, **self.fastTiming}
         )
         result.setData()
         result.setPosition()
@@ -247,7 +256,8 @@ class TestAlpaca(unittest.TestCase):
     def test_createLimitOrderBuy(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order buy | CLSK@5.965 | Strat buy TEST",
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            # req="order buy | CLSK@5.965 | Strat buy TEST",
             newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", **self.fastTiming}
         )
         result.setData()
@@ -257,8 +267,9 @@ class TestAlpaca(unittest.TestCase):
     def test_createLimitOrderSell(self):
         result = AutomatedTrader(
             **paperTrading,
-            req="order sell | CLSK@5.965 | Close position TEST",
-            newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", **self.fastTiming}
+            # req="order sell | CLSK@5.965 | Close position TEST",
+            req="order sell | MSFT@233.41 | Close position TEST",
+            newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", "fractional": False, **self.fastTiming}
         )
         result.setData()
         result.setPosition()
