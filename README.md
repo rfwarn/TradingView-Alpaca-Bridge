@@ -5,13 +5,15 @@ This project is a python program that connects TradingView alerts with Alpaca AP
 **Operation:**
 
 - Built on python 3.11.
+- Settings are located in [settings.py](settings.py). AlpacaTVBridge needs to be restarted for any changes in settings to take effect.
 - Best use case currently is opening and closing long positions.
 - Uses TradingView webhook. Can use [ngrok](https://ngrok.com/), a cloud service (Links to come!), etc. to connect webhook trigger to order action on Alpaca.
   - Add the following to the beginning of a strategy/indicator alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}} `...
 - Sets position size by incoming price from alpaca and settings (I like it this way to more accurately use backtesting in tradingview without having to worry about a wrong setting on that end).
-  - Currently only but and sells whole number amounts. Fractional trading will be added later.
+  - Currently only buys and sells whole number amounts. Fractional trading will be added later.
 - If there's already an open order, it will cancel it and place new order as long as there is no position for buying, etc. 
-- Stop loss and other similar features need to be handled in pine script.
+- Only two order types are sent to Alpaca (Market and Limit). Anything else will need to be handled in Tradingview programatically with alerts. Generally I like to have a strategy with a Buy, Sell, and Stoploss alert. This also gives you the ability to do things that a direct trade from Tradingview to Alapca that you don't typically have like a trailing stop, but it has to be coded in.
+- Stop loss and other similar features need to be handled in pine scripts.
 - Cancels any open order for the specified stock if another order is received then processes new order.
   - Buying 
     - Any open order for that stock will be canceled and a new one created.

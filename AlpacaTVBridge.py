@@ -51,7 +51,7 @@ def getKeys(account):
         account = realTrading
     else:
         raise NameError(
-            "Verify account type (realTrading/paperTrading) is correct in settings(using:)"
+            "Verify account type ('realTrading'/'paperTrading') is correct in settings(using:)"
         )
     return account
 
@@ -126,42 +126,15 @@ class AutomatedTrader:
 
     def __init__(self, api_key, secret_key, paper=True, req="", newOptions={}):
         self.options = {
-            # Enable/disable shorting. Not fully implemented yet.
-            # ***Alert(s) needs to say 'short' and you have to close any long positions first.
-            "short": False,
-            # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
-            # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
-            # Behaves differently when testMode is enabled.
-            "buyPerc": 0.2,
-            # Balance is set in the function setBalance().
-            "balance": 0,
-            # Not used
-            "buyBal": 0,
             # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
             "positions": [],
             # Retrieves open orders is there are any for the symbol requested.
             "orders": [],
             # Gets all the open orders.
             "allOrders": [],
-            # Testmode sets the balance to a predetermined amount set in createOrder.
-            # Used to not factor in remaining balance * buyPerc after positions are opened.
-            "testMode": True,
-            # enabled will allow submission of orders.
-            "enabled": True,
-            # Setting to True will impose a predefined limit for trades
-            "limit": True,
-            # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to buyPerc setting once stock price >limitThreshold.
-            "limitamt": 0.04,
-            # Limit threshold $ amount to change to % based limit
-            "limitThreshold": 100,
-            # limit percent for everything above a certain amount which is predefined for now below.
-            "limitPerc": 0.0005,
-            # Maxtime in seconds before canceling an order
-            "maxTime": 10,
         }
         # Use settings if they were imported successfully. More of a debug test since it fails if it's not there and it should be there.
-        if settings:
-            self.options = settings
+        self.options.update(settings)
         # Count the items in options and if newOptions changes this raise an exception.
         optCnt = len(self.options)
         self.options.update(newOptions)
@@ -262,17 +235,23 @@ class AutomatedTrader:
             self.cancelOrderById()
 
         if self.options["testMode"]:
-            # Testing with preset variables
+            # Testing with preset variables.
             self.options["balance"] = 100000
-        # Check for negative balance
+        # Check for negative balance.
         elif self.options["balance"] < 0:
             logger.warning(f'Negative balance: {self.options["balance"]}')
             self.options["balance"] = 0
 
-        # shares to buy in whole numbers
-        amount = int(
-            self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-        )
+        if self.options["fractional"]:
+            # Fractional shares to buy.
+            amount = float(
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+            )
+        else:
+            # Whole number shares to buy.
+            amount = int(
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+            )
 
         # get position quantity
         posQty = (
@@ -281,7 +260,8 @@ class AutomatedTrader:
             else 0
         )
 
-        # Setup for buy/sell/open/close/bear/bull/short/long
+        # Setup for buy/sell/open/close/bear/bull/short/long.
+        # Open a short position.
         if self.data["action"] == "Open" and self.data["position"] == "Short":
             side = OrderSide.SELL
             # Close if shorting not enabled. Need to adjust for positive and negative positions. Done?
@@ -310,6 +290,7 @@ class AutomatedTrader:
                 )
                 amount = 0
                 return
+        # Close a short position.
         elif self.data["action"] == "Close" and self.data["position"] == "Short":
             side = OrderSide.BUY
             # Close positions for symbol
@@ -323,6 +304,7 @@ class AutomatedTrader:
                 pass
             elif posQty < 0:
                 amount = abs(posQty)
+        # Open a long position.
         elif (
             self.data["action"] == "Bull"
             or self.data["action"] == "buy"
@@ -331,7 +313,7 @@ class AutomatedTrader:
             side = OrderSide.BUY
             if self.options["positions"] != None:
                 amount = 0
-
+        # Close a long position.
         elif (
             self.data["action"] == "Bear"
             or self.data["action"] == "sell"
@@ -346,9 +328,13 @@ class AutomatedTrader:
             # if not self.options['short']:
             #   logger.info(f'Shorting not enabled for: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}, quantity: {self.order_data.qty}')
             #   return
+        # Unhandled edge case.
         else:
             logger.error(
                 f'Unhandled Order: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}'
+            )
+            raise ValueError(
+                f'Unhandled action and/or position: {self.data["stock"]}, action: {self.data["action"]}, price: {self.data["price"]}'
             )
 
         # return if 0 shares are to be bought. Basically not enough left over for buying 1 share or more
@@ -473,8 +459,8 @@ class AutomatedTrader:
                         # Submit the order and udpate the local variable.
                         order = self.client.submit_order(self.order_data)
                         logger.debug(
-                                f'Timeout market order placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
-                            )
+                            f'Timeout market order placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
+                        )
                         # Verify new order completion.
                         if self.verifyOrder(order, True):
                             logger.debug(
@@ -562,8 +548,8 @@ if __name__ == "__main__":
     acctInfo()
     # Start the app
     try:
-        if sys.argv[1]=='serveTV':
-            serve(app, port=5000, threads=4, host='0.0.0.0')
+        if sys.argv[1] == "serveTV":
+            serve(app, port=5000, threads=4, host="0.0.0.0")
         else:
             serve(app, port=5000, threads=4)
     except IndexError:

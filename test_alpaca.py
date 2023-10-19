@@ -75,7 +75,7 @@ class TestAlpaca(unittest.TestCase):
         setcheck = [options["paperTrading"]]
         for x in setcheck:
             self.assertEqual(type(x["testMode"]), bool)
-            self.assertEqual(type(x["orders"]), list)
+            self.assertEqual(type(x["limit"]), bool)
             self.assertEqual(type(x["buyPerc"]), float)
         optionsChk = options["realTrading"].copy()
         optionsChk["asdf"] = "testfail"
