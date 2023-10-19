@@ -7,21 +7,23 @@ options = {
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
-        # Hard set at the moment to 20% of the cash balance. Useful in paper testing if you have around 5 stock alerts you want to analyse.
-        # Be careful, if more than one order is going through at the the same time, it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
-        # If testMode is enabled, it uses the % of 100000. 0.2 = 20%, 0.02 = 2%, etc.
+        # Set to percentage of the cash balance (0.2 = 20%, 0.02 = 2%...). If useMarinBuyingPower is >0, margin will also be factored in. 
+        # Useful in paper testing if you have around 5 stock alerts you want to analyze.
+        # Be careful, if more than one order is going through at the the same time, 
+        #   it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
+        # If testMode is enabled, it uses the % of 100000 (Ex. 0.2 = 20%, 0.02 = 2%...).
         "buyPerc": 0.2,
-        # Balance is set in the function setBalance(). 0 to automatically set balace based off other settings (cash, margin, )
+        # Set to 0 to automatically set balance based off other settings (cash available, margin, see other settings)
         "balance": 0,
         # Uses relative available funds (cash remaining) * the buyPerc. Ignored if testMode is True.
         # "useRelativeBalance": True,
         # Amount of margin to use. Set to 0 to disable which will use cash only. If testMode is enabled this will have no effect.
-        # Otherwise set to percent of margin to use (ex. 1 = 100% of daytrading_buying_power, 0.5 = 50%...)
+        # Otherwise set to percent of margin to use (Ex. 1 = 100% of daytrading_buying_power, 0.5 = 50%...)
         # "useMarinBuyingPower": 0,
         # Enable fractional trading. ***Fractional orders must be DAY orders***. May add auto setting for this later.
         "fractional": False,
         # Testmode sets the balance to a predetermined amount hard set in createOrder ($100,000).
-        # Great for paper trading and accurate analysis
+        # Great for paper trading and performance analysis.
         "testMode": True,
         # enabled will allow submission of orders.
         "enabled": True,
@@ -31,7 +33,7 @@ options = {
         "limitamt": 0.05,
         # Limit threshold to change to % based above it.
         "limitThreshold": 100,
-        # Limit percent for everything above limitThreshold. Ex. Buy @$200 would make the limit $200.16 for a $0.16 limit.
+        # Limit percent for everything above limitThreshold (Ex. Buy @$200 would make the limit $200.16 for a $0.16 limit)
         "limitPerc": 0.0008,
         # Enable/disable order verification. Suggested use for market orders or high frequency trading (roughly buy/sell within a minute).
         "verifyOrders": True,
