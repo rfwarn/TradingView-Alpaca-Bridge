@@ -34,7 +34,7 @@ path = filePath()
 #     # Setting to True will impose a predefined limit for trades
 #     "limit": True,
 #     # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
-#     "limitamt": 0.04,
+#     "limitAmt": 0.04,
 #     # limit percent for everything above a certain amount which is predefined for now below.
 #     "limitPerc": 0.0005,
 # }
@@ -209,7 +209,7 @@ class TestAlpaca(unittest.TestCase):
             req=marketLDC["OpenFCEL"],
             newOptions={"enabled": False, "limit": True, "fractional": False}
         )
-        limitPrice = 23.3 + options["paperTrading"]["limitamt"]
+        limitPrice = 23.3 + options["paperTrading"]["limitAmt"]
         result.setData()
         result.setPosition()
         result.createOrder()
@@ -283,6 +283,17 @@ class TestAlpaca(unittest.TestCase):
                 newOptions={"enabled": True, "limit": False}
             )
             result.setData()
+
+    def test_buyAmt(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            newOptions={"enabled": False, "buyPerc": 0, "testMode": False, "limit": False, "fractional": True, **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+        self.assertEqual(result.order_data.qty, 8.568613169958443)
 
     # maxTimeout failsafes
     # def test_limitBuyTimeoutCancel(self):

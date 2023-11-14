@@ -244,16 +244,21 @@ class AutomatedTrader:
         elif self.options["balance"] < 0:
             logger.warning(f'Negative balance: {self.options["balance"]}')
             self.options["balance"] = 0
+        # Check and set balace for set value per trade.
+        elif self.options["buyPerc"] == 0 and self.options["buyAmt"] > 0:
+            self.options["balance"] = self.options["buyAmt"]
 
         if self.options["fractional"]:
             # Fractional shares to buy.
             amount = float(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"] if self.options["buyPerc"] > 0 else
+                self.options["buyAmt"] / self.data["price"]
             )
         else:
-            # Whole number shares to buy.
+            # Whole number shares to buy if fractional is not enabled.
             amount = int(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"] if self.options["buyPerc"] > 0 else
+                self.options["buyAmt"] / self.data["price"]
             )
 
         # get position quantity
@@ -357,6 +362,7 @@ class AutomatedTrader:
 
     def orderType(self, amount, side, limit):
         # Setup buy/sell order
+        # Determine if using fractional amount of shares to buy.
         fractional = int(amount) != float(amount)
         # Market order if "limit" setting set to False
         if not limit:
@@ -368,9 +374,9 @@ class AutomatedTrader:
             )
         # Limit order if "limit" setting set to True
         elif limit:
-            # Predefined price to override limitamt with limitPerc*price
+            # Predefined price to override limitAmt with limitPerc*price
             if self.data["price"] > self.options["limitThreshold"]:
-                self.options["limitamt"] = (
+                self.options["limitAmt"] = (
                     self.data["price"] * self.options["limitPerc"]
                 )
             order_data = LimitOrderRequest(
@@ -378,13 +384,13 @@ class AutomatedTrader:
                 limit_price=round(
                     self.data["price"]
                     + (
-                        self.options["limitamt"]
+                        self.options["limitAmt"]
                         if side == OrderSide.BUY
-                        else -self.options["limitamt"]
+                        else -self.options["limitAmt"]
                     ),
                     2,
                 ),
-                qty=amount,  # 100
+                qty=amount,  # amount of stock to buy.
                 side=side,
                 time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
             )

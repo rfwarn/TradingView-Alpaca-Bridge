@@ -1,4 +1,4 @@
-# Settings. If using realTrading, setting default to paperTrading if not explicitly used in realTrading settings.
+# Settings. If using realTrading, setting default to paperTrading if not explicitly used in realTrading settings. Swap commented "using" to switch back and forth.
 options = {
     "using": "paperTrading",
     # "using": "realTrading",
@@ -10,9 +10,11 @@ options = {
         # Set to percentage of the cash balance (0.2 = 20%, 0.02 = 2%...). If useMarinBuyingPower is >0, margin will also be factored in. 
         # Useful in paper testing if you have around 5 stock alerts you want to analyze.
         # Be careful, if more than one order is going through at the the same time, 
-        #   it may spend over the total cash available and go into margins. Mainly a problem in real money trading.
+        #   it may spend over the total cash available and go into margins. Mainly a potential problem in real money trading.
         # If testMode is enabled, it uses the % of 100000 (Ex. 0.2 = 20%, 0.02 = 2%...).
         "buyPerc": 0.2,
+        # Sets a predefined amount to use for trading. Does not factor in account balance. Amount is USD. Bypassed if "testMode" is True or "buyPerc" is > 0.
+        "buyAmt": 2000,
         # Set to 0 to automatically set balance based off other settings (cash available, margin, see other settings)
         "balance": 0,
         # Uses relative available funds (cash remaining) * the buyPerc. Ignored if testMode is True.
@@ -30,7 +32,7 @@ options = {
         # Setting to True will impose a predefined limit for trades. Will make market orders if set to False.
         "limit": True,
         # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
-        "limitamt": 0.05,
+        "limitAmt": 0.05,
         # Limit threshold to change to % based above it.
         "limitThreshold": 100,
         # Limit percent for everything above limitThreshold (Ex. Buy @$200 would make the limit $200.16 for a $0.16 limit)
@@ -55,7 +57,8 @@ options = {
     # See descriptions above.
     "realTrading": {
         "short": False,
-        "buyPerc": 0.02,
+        "buyPerc": 0,
+        "buyAmt": 1000,
         "testMode": False,
         "limit": True,
     },
