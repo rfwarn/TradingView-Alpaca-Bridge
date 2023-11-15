@@ -68,14 +68,14 @@ account = getKeys(options["using"])
 # Load settings
 def loadSettings(paper, real, using):
     settings = paper
-    if using != "paperTrading":
-        for i in real.keys():
-            try:
-                settings[i]
-            except:
-                err = f"realTrading/paperTrading setting name mismatch: {i}. Please fix the spelling in realTrading"
-                raise Exception(err)
-        settings.update(options[options["using"]])
+    for i in real.keys():
+        try:
+            settings[i]
+        except:
+            err = f"realTrading/paperTrading setting name mismatch: '{i}' item in real settings. Please fix the spelling or remove it from realTrading settings"
+            raise Exception(err)
+        if using != "paperTrading":
+            settings.update(options[options["using"]])
     return settings
 
 

@@ -1,6 +1,6 @@
 from AlpacaTVBridge import AutomatedTrader, filePath, getKeys, loadSettings
 from settings import options
-import unittest, os, json
+import unittest, os, json, pytest
 
 paperTrading = getKeys("paperTrading")
 realTrading = getKeys("realTrading")
@@ -319,4 +319,6 @@ class TestAlpaca(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    pytest.main()
+    # pytest test_alpaca.py::TestAlpaca::test_buyAmt

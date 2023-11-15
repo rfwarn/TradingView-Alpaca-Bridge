@@ -58,8 +58,9 @@ options = {
     "realTrading": {
         "short": False,
         "buyPerc": 0,
-        "buyAmt": 1000,
+        "buyAmt": 500,
         "testMode": False,
         "limit": True,
+        "fractional": True,
     },
 }
