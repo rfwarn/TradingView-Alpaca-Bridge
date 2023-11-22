@@ -115,6 +115,10 @@ def acctInfo():
     print(f"daytrading_buying_power: {temp.daytrading_buying_power}")
     print(f"shorting_enabled: {temp.shorting_enabled}")
     print(f"crypto_status: {temp.crypto_status}")
+    try:
+        print(f'Program argurment: {sys.argv[1]}')
+    except:
+        print(f'Program argurment: None')
     print("-------------------------------------------------")
 
 
@@ -561,6 +565,6 @@ if __name__ == "__main__":
         if sys.argv[1] == "serveTV":
             serve(app, port=5000, threads=4, host="0.0.0.0")
         else:
-            serve(app, port=5000, threads=4)
+            serve(app, port=5000, threads=4, host="127.0.0.1")
     except IndexError:
-        serve(app, port=5000, threads=4)
+        serve(app, port=5000, threads=4, host="127.0.0.1")
