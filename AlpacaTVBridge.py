@@ -8,8 +8,11 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
-from default_settings import options
 import os, logging, re, time, sys
+try:
+    from settings import options
+except:
+    from default_settings import options
 
 # from alpaca.trading.models import Position
 
