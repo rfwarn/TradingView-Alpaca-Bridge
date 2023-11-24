@@ -8,7 +8,7 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
-from settings import options
+from default_settings import options
 import os, logging, re, time, sys
 
 # from alpaca.trading.models import Position
@@ -84,13 +84,15 @@ settings = loadSettings(
 )
 
 # Check for configuration conflict that could cause unintended buying or errors.
-if settings["enabled"] and settings["testMode"] and options["using"]=="realTrading":
+if settings["enabled"] and settings["testMode"] and options["using"] == "realTrading":
     err = "testMode and real money keys being used, exiting. Change one or the other."
     raise Exception(err)
 elif settings["fractional"] and settings["limit"]:
-    err = "fractional and limit can't be used together, exiting. Change one or the other."
+    err = (
+        "fractional and limit can't be used together, exiting. Change one or the other."
+    )
     raise Exception(err)
-    
+
 app = Flask(__name__)
 
 # data examples from pine script strategy alerts:
@@ -116,9 +118,9 @@ def acctInfo():
     print(f"shorting_enabled: {temp.shorting_enabled}")
     print(f"crypto_status: {temp.crypto_status}")
     try:
-        print(f'Program argurment: {sys.argv[1]}')
+        print(f"Program argurment: {sys.argv[1]}")
     except:
-        print(f'Program argurment: None')
+        print(f"Program argurment: None")
     print("-------------------------------------------------")
 
 
@@ -255,14 +257,16 @@ class AutomatedTrader:
         if self.options["fractional"]:
             # Fractional shares to buy.
             amount = float(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"] if self.options["buyPerc"] > 0 else
-                self.options["buyAmt"] / self.data["price"]
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+                if self.options["buyPerc"] > 0
+                else self.options["buyAmt"] / self.data["price"]
             )
         else:
             # Whole number shares to buy if fractional is not enabled.
             amount = int(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"] if self.options["buyPerc"] > 0 else
-                self.options["buyAmt"] / self.data["price"]
+                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+                if self.options["buyPerc"] > 0
+                else self.options["buyAmt"] / self.data["price"]
             )
 
         # get position quantity
