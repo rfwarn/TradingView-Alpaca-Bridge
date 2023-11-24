@@ -1,0 +1,1 @@
+# Repository for stock info to speed up buy time and for reference.
