@@ -1,6 +1,9 @@
 from AlpacaTVBridge import AutomatedTrader, filePath, getKeys, loadSettings
-from default_settings import options
 import unittest, os, json, pytest
+try:
+    from settings import options
+except:
+    from default_settings import options
 
 paperTrading = getKeys("paperTrading")
 realTrading = getKeys("realTrading")
