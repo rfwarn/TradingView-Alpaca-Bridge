@@ -9,6 +9,7 @@ from alpaca.trading.requests import (
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
 import os, logging, re, time, sys
+
 try:
     from settings import options
 except:
@@ -34,6 +35,13 @@ logger.addHandler(handler)
 
 
 def getKeys(account):
+    """Retrives the keys for either the "paperTrading" or "realTrading" account.
+    Pass in either "paperTrading" or "realTrading" and it will return the keys and paper setting.
+    Ex. {
+        "api_key": "ASDJKL",
+        "secret_key": "jkn23kj234nkj2",
+        "paper": True,
+    }"""
     load_dotenv(override=True)
     # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
     if account == "paperTrading":
