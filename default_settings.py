@@ -61,6 +61,7 @@ options = {
     # See descriptions above.
     "realTrading": {
         "short": False,
+        "maxPositions": 4,
         "buyPerc": 0,
         "buyAmt": 500,
         "testMode": False,

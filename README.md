@@ -49,7 +49,7 @@ Paper trading keys:
 
 Real money trading keys:
 "Alpaca_API_KEY-real=GREJ..."
-"Alpaca_SECRET-real=XCVJH..."
+"Alpaca_SECRET_KEY-real=XCVJH..."
 ```
 ***
 **Disclaimer:**

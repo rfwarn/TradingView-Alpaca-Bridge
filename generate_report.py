@@ -47,8 +47,11 @@ def getDocuments():
 
 
 if __name__ == "__main__":
-    # set to 'paperTrading' or 'realTrading' (default is paper). Second arguemnt is number of days to return (default is 7). Limit max is 500 returns at the moment.
+    # Generates reports for both 'paperTrading' and 'realTrading'. Second arguemnt is number of days to return (default is 30). Limit max is 500 returns at the moment by Alpaca.
     account = "paperTrading"
+    report = genReport(account)
+    writeFile(report, account)
+    account = "realTrading"
     report = genReport(account)
     writeFile(report, account)
     # getDocuments()

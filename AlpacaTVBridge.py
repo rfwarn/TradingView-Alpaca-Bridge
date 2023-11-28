@@ -56,7 +56,7 @@ def getKeys(account):
         # Real money trading
         realTrading = {
             "api_key": os.environ.get("Alpaca_API_KEY-real"),
-            "secret_key": os.environ.get("Alpaca_SECRET-real"),
+            "secret_key": os.environ.get("Alpaca_SECRET_KEY-real"),
             "paper": False,
         }
         account = realTrading
