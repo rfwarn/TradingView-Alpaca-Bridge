@@ -4,7 +4,7 @@ This project is a python program that connects TradingView alerts with Alpaca AP
 
 **Operation:**
 
-- Built on python 3.11.
+- Built on python 3.11. Tested and works natively on windows 10/11 and Amazon Linux 2023. Docker not recommended but there if you want to use it.
 - Settings are located in [settings.py](settings.py). AlpacaTVBridge needs to be restarted for any changes in settings to take effect.
 - Best use case currently is opening and closing long positions.
 - Uses TradingView webhook. Can use [ngrok](https://ngrok.com/), a cloud service (Links to come!), etc. to connect webhook trigger to order action on Alpaca.
@@ -51,6 +51,13 @@ Real money trading keys:
 "Alpaca_API_KEY-real=GREJ..."
 "Alpaca_SECRET_KEY-real=XCVJH..."
 ```
+***
+**Basic setup example:**
+
+#### Here are the steps I took to move this app to a cloud instance:
+I went with EC2 by Amazon AWS for no reason in particular. You could use Azure, Google Cloud, etc. I recommend setting up the security groups to only only traffic from TradingView and computers you want to access it from. I do not recommend running it in a docker becuase it takes up a lot more resources and doesn't seem necessary, but I could be wrong.
+
+to be continued...
 ***
 **Disclaimer:**
 
