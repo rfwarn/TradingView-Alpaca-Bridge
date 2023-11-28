@@ -151,8 +151,10 @@ class AutomatedTrader:
 
     def __init__(self, api_key, secret_key, paper=True, req="", newOptions={}):
         self.options = {
-            # Gets open potisions to verify ordering. Multiple buys before selling not implemented yet.
+            # Gets open potisions for specific stock to verify ordering. Multiple buys before selling not implemented yet.
             "positions": [],
+            # Gets all open positions.
+            "allPositions": [],
             # Retrieves open orders is there are any for the symbol requested.
             "orders": [],
             # Gets all the open orders.
@@ -178,6 +180,7 @@ class AutomatedTrader:
             self.setData()
             self.setOrders()
             self.setPosition()
+            self.setAllPositions()
             self.setBalance()
             self.createOrder()
 
@@ -236,8 +239,10 @@ class AutomatedTrader:
                 self.data["stock"]
             )
         except Exception as e:
-            # logger.warning(e)
             self.options["positions"] = None
+
+    def setAllPositions(self):
+        self.options['allPositions'] = self.client.get_all_positions()
 
     def setBalance(self):
         # set balance at beginning and after each transaction
@@ -249,7 +254,8 @@ class AutomatedTrader:
         self.options["balance"] = acctBal
 
     def createOrder(self):
-        # Setting papameters for market order
+        # Setup for creating and verifying orders
+        
         # Clear uncompleted open orders. Shouldn't be any unless trading is unavailable...
         if len(self.options["orders"]) > 0:
             self.cancelOrderById()
@@ -333,18 +339,18 @@ class AutomatedTrader:
                 amount = abs(posQty)
         # Open a long position.
         elif (
-            self.data["action"] == "Bull"
-            or self.data["action"] == "buy"
-            or self.data["action"] == "Open"
+            self.data["action"].upper() == "Bull".upper()
+            or self.data["action"].upper() == "buy".upper()
+            or self.data["action"].upper() == "Open".upper()
         ) and (self.data["position"] == "Long" or self.data["position"] == None):
             side = OrderSide.BUY
             if self.options["positions"] != None:
                 amount = 0
         # Close a long position.
         elif (
-            self.data["action"] == "Bear"
-            or self.data["action"] == "sell"
-            or self.data["action"] == "Close"
+            self.data["action"].upper() == "Bear".upper()
+            or self.data["action"].upper() == "sell".upper()
+            or self.data["action"].upper() == "Close".upper()
         ) and (self.data["position"] == "Long" or self.data["position"] == None):
             side = OrderSide.SELL
             # Close positions for symbol. Setting to 0 so it won't run if there's already a position.
@@ -420,6 +426,20 @@ class AutomatedTrader:
             self.order_data
         except AttributeError:
             return
+
+        # Logic to factor in max position if enabled. Creates a log warning if positions exceed max. If it's at the max it won't buy
+        if self.order_data.side == OrderSide.BUY:
+            if self.options['maxPositions'] == 0:
+                pass
+            elif len(self.options['allPositions']) > self.options['maxPositions']:
+                err = f'Over max positions: max positions - {self.options["maxPositions"]}, current positions - {[x.symbol for x in self.options["allPositions"]]}'
+                logger.warning(err)
+                raise Exception(err)
+                return False
+            elif len(self.options['allPositions']) == self.options['maxPositions']:
+                logger.info(f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}')
+                return False
+
         # escape and don't actually submit order if not enabled. For debugging/testing purposes.
         if not self.options["enabled"]:
             logger.debug(

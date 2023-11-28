@@ -11,6 +11,10 @@ options = {
         # Useful in paper testing if you have around 5 stock alerts you want to analyze.
         # Be careful, if more than one order is going through at the the same time, 
         #   it may spend over the total cash available and go into margins. Mainly a potential problem in real money trading.
+        # Limits the amount of positions open at a time to help prevent overspending. Set to 0 to disable limit. 
+        #   Warning, if more than one order is processed before the others complete, it may exceed the maximum limit. 
+        #   High frequency algorithms and/or multiple alerts on different stock (~8 or more) are more likely to cause this since they trigger more often.
+        "maxPositions": 0,
         # If testMode is enabled, it uses the % of 100000 (Ex. 0.2 = 20%, 0.02 = 2%...).
         "buyPerc": 0.2,
         # Sets a predefined amount to use for trading. Does not factor in account balance. Amount is USD. Bypassed if "testMode" is True or "buyPerc" is > 0.

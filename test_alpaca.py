@@ -68,7 +68,15 @@ class TestAlpaca(unittest.TestCase):
     paperClient = AutomatedTrader(
         **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
     )
+    
     fastTiming = {"maxTime": 3, "totalMaxTime": 4}
+    
+    class DebugPos:
+        symbol = 'testing'
+    p1 = DebugPos()
+    debugPositions = [p1, p1]
+    # [x.symbol for x in self.options["allPositions"]]
+    
     # For debugging
     # def setUp(self):
     #   print("In method", self._testMethodName)
@@ -297,6 +305,47 @@ class TestAlpaca(unittest.TestCase):
         result.setPosition()
         result.createOrder()
         self.assertEqual(result.order_data.qty, 8.568613169958443)
+
+    def test_MaxPos1(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 0, "allPositions": self.debugPositions, **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+
+    def test_MaxPos2(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 2, "allPositions": self.debugPositions, **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+
+    def test_MaxPos3(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order buy | MSFT@233.41 | Strat buy TEST",
+            newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 1, "allPositions": self.debugPositions, **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        with self.assertRaises(Exception):
+            result.createOrder()
+
+    def test_MaxPos4(self):
+        result = AutomatedTrader(
+            **paperTrading,
+            req="order sell | MSFT@233.41 | Strat sell TEST",
+            newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 1, "allPositions": self.debugPositions, **self.fastTiming}
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
 
     # maxTimeout failsafes
     # def test_limitBuyTimeoutCancel(self):
