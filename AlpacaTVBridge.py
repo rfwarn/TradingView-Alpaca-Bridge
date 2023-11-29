@@ -8,14 +8,15 @@ from alpaca.trading.requests import (
     LimitOrderRequest,
 )
 from alpaca.trading.enums import OrderSide, TimeInForce
-import os, logging, re, time, sys
+import os, logging, re, time, sys, json
+
 
 try:
     from settings import options
 except ModuleNotFoundError:
     from default_settings import options
 
-# from alpaca.trading.models import Position
+from Data.get_stock_info import StockUpdater
 
 # Create a logger
 logger = logging.getLogger("AlpacaLogger")
@@ -35,24 +36,37 @@ logger.addHandler(handler)
 
 # Pointer for the type you want to use (real/paper).
 account = getKeys(options["using"])
+accountReal = getKeys("realTrading")
+accountPaper = getKeys("paperTrading")
 
+# Load stocks
+path = os.path.dirname(__file__)
+with open(path + os.sep + "Data/stocks.json", "r") as f:
+    stocks = json.load(f)
+# teste = StockUpdater()
 
 # Load settings
 def loadSettings(paper, real, using):
-    settings = paper
+    settings = paper.copy()
     for i in real.keys():
         try:
             settings[i]
         except:
-            err = f"realTrading/paperTrading setting name mismatch: '{i}' item in real settings. Please fix the spelling or remove it from realTrading settings"
+            err = f"realTrading/paperTrading setting name discrepancy: '{i}' item in 'realTraing' settings. Please fix the spelling or remove it from realTrading settings."
             raise Exception(err)
-        if using != "paperTrading":
-            settings.update(options[options["using"]])
+    if using != "paperTrading":
+        settings.update(options["realTrading"])
     return settings
 
 
 settings = loadSettings(
     options["paperTrading"], options["realTrading"], options["using"]
+)
+settingsReal = loadSettings(
+    options["paperTrading"], options["realTrading"], "realTrading"
+)
+settingsPaper = loadSettings(
+    options["paperTrading"], options["realTrading"], "paperTrading"
 )
 
 # Check for configuration conflict that could cause unintended buying or errors.
@@ -100,7 +114,7 @@ def acctInfo():
 def respond():
     req_data = str(request.data)
     logger.info(f"Recieved request with data: {req_data}")
-    trader = AutomatedTrader(**account, req=req_data)
+    trader = AutomatedTrader(req=req_data)
 
     return Response(status=200)
 
@@ -110,7 +124,15 @@ class AutomatedTrader:
     orders.'req' is the request that needs to be processed.
     """
 
-    def __init__(self, api_key, secret_key, paper=True, req="", newOptions={}):
+    def __init__(self, req="", newOptions={}):
+        global settings
+        global settingsPaper
+        global settingsReal
+        global account
+        global accountReal
+        global accountPaper
+        global stocks
+        self.asset = None
         self.options = {
             # Gets open potisions for specific stock to verify ordering. Multiple buys before selling not implemented yet.
             "positions": [],
@@ -121,33 +143,49 @@ class AutomatedTrader:
             # Gets all the open orders.
             "allOrders": [],
         }
+        
+        # Set request data and stock info.
+        self.req = req
+        self.setData()
+        self.setStockInfo()
+        
         # Use settings if they were imported successfully. More of a debug test since it fails if it's not there and it should be there.
-        self.options.update(settings)
-        # Count the items in options and if newOptions changes this raise an exception.
+        # self.options.update(settings)
+        self.client = self.createClientAndSettings()
+        # Count the items in options and if newOptions increases it, raise an exception.
         optCnt = len(self.options)
         self.options.update(newOptions)
         if len(self.options) != optCnt:
             raise Exception(
                 "Extra options found. Verify newOption keys match option keys"
             )
-        # Load keys, request data, and create trading client instance.
-        self.api_key = api_key
-        self.secret_key = secret_key
-        self.paper = paper
-        self.client = self.createClient()
-        self.req = req
         # Verify 'enabled' option is True. Used primarily for unittesting.
         if self.options["enabled"]:
-            self.setData()
             self.setOrders()
             self.setPosition()
             self.setAllPositions()
             self.setBalance()
             self.createOrder()
 
-    def createClient(self):
+    def createClientAndSettings(self):
         # Creates the trading client based on real or paper account.
-        return TradingClient(self.api_key, self.secret_key, paper=self.paper)
+        try:
+            if self.asset['account']=='':
+                self.options.update(settings)
+                return TradingClient(**account)
+            elif self.asset['account'].upper()=='real'.upper():
+                self.options.update(settingsReal)
+                return TradingClient(**accountReal)
+            elif self.asset['account'].upper()=='paper'.upper():
+                self.options.update(settingsPaper)
+                return TradingClient(**accountPaper)
+            else:
+                logger.warning(f'Invalid stock account setting in stocks.json: {self.data["stock"]}. Defaulting to user settings.')
+                self.options.update(settings)
+                return TradingClient(**account)
+        except TypeError:
+                self.options.update(settings)
+                return TradingClient(**account)
 
     def setData(self):
         # requests parsed for either Machine Learning: Lorentzian
@@ -192,6 +230,12 @@ class AutomatedTrader:
         # get open orders
         stock = GetOrdersRequest(symbols=[self.data["stock"]])
         self.options["orders"] = self.client.get_orders(stock)
+
+    def setStockInfo(self):
+        for item in stocks:
+            if item['symbol']==self.data['stock']:
+                self.asset = item
+                break
 
     def setPosition(self):
         # get stock positions
@@ -240,7 +284,7 @@ class AutomatedTrader:
                 else self.options["buyAmt"] / self.data["price"]
             )
         else:
-            # Whole number shares to buy if fractional is not enabled.
+            # Whole number shares to buy if fractional is not enabled. Rounds down.
             amount = int(
                 self.options["balance"] * self.options["buyPerc"] / self.data["price"]
                 if self.options["buyPerc"] > 0

@@ -66,6 +66,6 @@ options = {
         "buyAmt": 500,
         "testMode": False,
         "limit": True,
-        "fractional": True,
+        "fractional": False,
     },
 }

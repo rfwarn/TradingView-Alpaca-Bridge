@@ -30,7 +30,7 @@ with open(filename, "r") as f:
 
 
 class StockUpdater:
-    def __init__(self, stocks):
+    def __init__(self, stocks=[]):
         self.stocks = stocks
 
     def stockSplitter(self, assetList):
@@ -105,6 +105,22 @@ class StockUpdater:
         with open(filename, "w+") as f:
             # f.write(stocks)
             json.dump(self.stocks, f, indent=4)
+            
+    def getAccountPreference(self):
+        if self.stocks == []:
+            print('Empty stocks list')
+            return
+        real = []
+        paper = []
+        neither = []
+        for stock in self.stocks:
+            if stock['account'] == '':
+                neither.append(stock['symbol'])
+            elif stock['account'].upper() == 'real'.upper():
+                real.append(stock['symbol'])
+            elif stock['account'].upper() == 'paper'.upper():
+                paper.append(stock['symbol'])
+        print(f"No preference: {neither},\nreal: {real},\npaper: {paper}")
 
 
 if __name__ == "__main__":
@@ -118,9 +134,10 @@ if __name__ == "__main__":
         manualStockAdd = StockUpdater(stocks)
         manualStockAdd.stockSplitter(inputList)
     except IndexError:
-        None
+        clstest = StockUpdater(stocks)
+        clstest.getAccountPreference()
+        # None
         # print('no arg provided')
-        # clstest = StockUpdater(stocks)
         # clstest.stockSplitter("fcel")
         # clstest.stockRemover('goog')
         # clstest.stockRemover(["NVDA","MSFT"])
