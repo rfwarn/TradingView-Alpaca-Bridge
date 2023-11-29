@@ -19,3 +19,4 @@ userSettings.py
 *.json
 *.service
 Data/stocks.*
+getAWSsecureKeys.py
