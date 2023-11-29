@@ -1,4 +1,5 @@
-from AlpacaTVBridge import AutomatedTrader, filePath, getKeys, loadSettings
+from AlpacaTVBridge import AutomatedTrader, getKeys, loadSettings
+from filePath import filePath
 import unittest, os, json, pytest
 try:
     from settings import options

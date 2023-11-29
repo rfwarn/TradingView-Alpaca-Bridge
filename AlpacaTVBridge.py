@@ -1,6 +1,6 @@
 from flask import Flask, request, Response
 from waitress import serve
-from dotenv import load_dotenv
+from getKeys import getKeys
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import (
     MarketOrderRequest,
@@ -32,45 +32,6 @@ handler.setFormatter(formatter)
 
 # Add the handler to the logger
 logger.addHandler(handler)
-
-
-def getKeys(account):
-    """Retrives the keys for either the "paperTrading" or "realTrading" account.
-    Pass in either "paperTrading" or "realTrading" and it will return the keys and paper setting.
-    Ex. {
-        "api_key": "ASDJKL",
-        "secret_key": "jkn23kj234nkj2",
-        "paper": True,
-    }"""
-    load_dotenv(override=True)
-    # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
-    if account == "paperTrading":
-        # Paper trading
-        paperTrading = {
-            "api_key": os.environ.get("Alpaca_API_KEY"),
-            "secret_key": os.environ.get("Alpaca_SECRET_KEY"),
-            "paper": True,
-        }
-        account = paperTrading
-    elif account == "realTrading":
-        # Real money trading
-        realTrading = {
-            "api_key": os.environ.get("Alpaca_API_KEY-real"),
-            "secret_key": os.environ.get("Alpaca_SECRET_KEY-real"),
-            "paper": False,
-        }
-        account = realTrading
-    else:
-        raise NameError(
-            "Verify account type ('realTrading'/'paperTrading') is correct in settings(using:)"
-        )
-    return account
-
-
-# Get file path
-def filePath():
-    return os.path.dirname(__file__)
-
 
 # Pointer for the type you want to use (real/paper).
 account = getKeys(options["using"])
@@ -242,7 +203,7 @@ class AutomatedTrader:
             self.options["positions"] = None
 
     def setAllPositions(self):
-        self.options['allPositions'] = self.client.get_all_positions()
+        self.options["allPositions"] = self.client.get_all_positions()
 
     def setBalance(self):
         # set balance at beginning and after each transaction
@@ -255,7 +216,7 @@ class AutomatedTrader:
 
     def createOrder(self):
         # Setup for creating and verifying orders
-        
+
         # Clear uncompleted open orders. Shouldn't be any unless trading is unavailable...
         if len(self.options["orders"]) > 0:
             self.cancelOrderById()
@@ -429,15 +390,17 @@ class AutomatedTrader:
 
         # Logic to factor in max position if enabled. Creates a log warning if positions exceed max. If it's at the max it won't buy
         if self.order_data.side == OrderSide.BUY:
-            if self.options['maxPositions'] == 0:
+            if self.options["maxPositions"] == 0:
                 pass
-            elif len(self.options['allPositions']) > self.options['maxPositions']:
+            elif len(self.options["allPositions"]) > self.options["maxPositions"]:
                 err = f'Over max positions: max positions - {self.options["maxPositions"]}, current positions - {[x.symbol for x in self.options["allPositions"]]}'
                 logger.warning(err)
                 raise Exception(err)
                 return False
-            elif len(self.options['allPositions']) == self.options['maxPositions']:
-                logger.info(f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}')
+            elif len(self.options["allPositions"]) == self.options["maxPositions"]:
+                logger.info(
+                    f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}'
+                )
                 return False
 
         # escape and don't actually submit order if not enabled. For debugging/testing purposes.

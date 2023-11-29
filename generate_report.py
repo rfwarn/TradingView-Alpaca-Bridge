@@ -5,7 +5,7 @@ import os
 import requests
 import datetime
 import pandas as pd
-from AlpacaTVBridge import getKeys
+from getKeys import getKeys
 
 
 def genReport(account: str = "paperTrading", days: int = 30):
