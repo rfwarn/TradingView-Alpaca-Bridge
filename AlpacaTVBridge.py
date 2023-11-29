@@ -12,7 +12,7 @@ import os, logging, re, time, sys
 
 try:
     from settings import options
-except:
+except ModuleNotFoundError:
     from default_settings import options
 
 # from alpaca.trading.models import Position
