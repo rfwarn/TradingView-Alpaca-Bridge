@@ -43,13 +43,13 @@ This project is a python program that connects TradingView alerts with Alpaca AP
 **API keys:**
 Add these to your environment an/or .env file:
 ```
-Paper trading keys:
-"Alpaca_API_KEY=ASDF..."
-"Alpaca_SECRET_KEY=WERT..."
+# Paper trading keys:
+Alpaca_API_KEY=ASDF...
+Alpaca_SECRET_KEY=WERT...
 
-Real money trading keys:
-"Alpaca_API_KEY-real=GREJ..."
-"Alpaca_SECRET_KEY-real=XCVJH..."
+# Real money trading keys:
+Alpaca_API_KEY-real=GREJ...
+Alpaca_SECRET_KEY-real=XCVJH...
 ```
 ***
 **Basic setup example:**
