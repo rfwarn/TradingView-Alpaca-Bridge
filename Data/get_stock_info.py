@@ -6,6 +6,7 @@ import requests
 import sys
 import os
 import json
+import ast
 
 # Get parent directory
 path = os.path.dirname(__file__)
@@ -69,7 +70,7 @@ class StockUpdater:
         return json.loads(response.text)
 
     def updateStockInfo(self, asset):
-        # Takes in the stock list and one asset. Adds account key to asset dictionary for user account preference ("paper", "real").
+        # Adds or updates one asset. Adds account key to asset dictionary for user account preference ("paper", "real"). Also updates the asset data if there are changes.
         for n, stock in enumerate(self.stocks):
             if asset["symbol"] == stock["symbol"]:
                 if not "account" in stock:
@@ -107,10 +108,15 @@ class StockUpdater:
 
 
 if __name__ == "__main__":
+    # TODO: Add add and remove options. Code implemented but currently only add is setup for arguments.
     try:
         print(f"Adding: {sys.argv[1]}")
+        try:
+            inputList = ast.literal_eval(sys.argv[1])
+        except ValueError:
+            inputList = sys.argv[1]
         manualStockAdd = StockUpdater(stocks)
-        manualStockAdd.stockSplitter(sys.argv[1])
+        manualStockAdd.stockSplitter(inputList)
     except IndexError:
         None
         # print('no arg provided')
