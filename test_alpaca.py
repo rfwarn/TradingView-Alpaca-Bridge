@@ -65,9 +65,9 @@ marketLDC = {
 
 
 class TestAlpaca(unittest.TestCase):
-    # realClient = AutomatedTrader(**realTrading, newOptions={})
+    # realClient = AutomatedTrader(realTrading, newOptions={})
     paperClient = AutomatedTrader(
-        **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
+        paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
     )
     
     fastTiming = {"maxTime": 3, "totalMaxTime": 4}
@@ -98,7 +98,7 @@ class TestAlpaca(unittest.TestCase):
         # Test for typos in newOptions which would have unintended effects.
         with self.assertRaises(Exception):
             AutomatedTrader(
-                **paperTrading,
+                paperTrading,
                 req="order sell | MSFT@337.57 | TEST",
                 newOptions={"enabled": True, "newVal": True}
             )
@@ -107,20 +107,20 @@ class TestAlpaca(unittest.TestCase):
         # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
         with self.assertRaises(Exception):
             AutomatedTrader(
-                **realTrading, req="", newOptions={"enabled": True, "testMode": True}
+                realTrading, req="", newOptions={"enabled": True, "testMode": True}
             )
 
     def test_fractionalLimit(self):
         # Test failsafe that prevents trying to place an order as a limit with fractional enabled which Alpaca does not support.
         with self.assertRaises(Exception):
             AutomatedTrader(
-                **realTrading, req="", newOptions={"fractional": True, "limit": True}
+                realTrading, req="", newOptions={"fractional": True, "limit": True}
             )
 
     def test_data1(self):
         # Testing of the different predefined alert types.
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order sell | MSFT@337.57 | TEST",
             newOptions={"enabled": False}
         )
@@ -132,7 +132,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data2(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@337.57 | TEST",
             newOptions={"enabled": False}
         )
@@ -144,7 +144,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data3(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Bear"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Bear"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bear")
@@ -154,7 +154,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data4(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Bull"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Bull"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bull")
@@ -164,7 +164,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data5(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Open"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Open"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -174,7 +174,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data6(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
@@ -184,7 +184,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data7(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Short"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Short"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -194,7 +194,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data8(self):
         result = AutomatedTrader(
-            **paperTrading, req=marketLDC["Close"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Close"], newOptions={"enabled": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
@@ -209,7 +209,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_balance(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req=marketLDC["Close"],
             newOptions={"enabled": False, "testMode": True}
         )
@@ -217,7 +217,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createLimitOrder(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req=marketLDC["OpenFCEL"],
             newOptions={"enabled": False, "limit": True, "fractional": False}
         )
@@ -231,7 +231,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createMarketOrder(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req=marketLDC["OpenFCEL"],
             newOptions={"enabled": False, "limit": False, "fractional": False}
         )
@@ -245,7 +245,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createMarketOrderBuy(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             # req="order buy | CLSK@5.965 | Strat buy TEST",
             newOptions={"enabled": True, "limit": False, "buyTimeout": "Cancel", "fractional": True, **self.fastTiming}
@@ -256,7 +256,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createMarketOrderSell(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order sell | MSFT@233.41 | Close position TEST",
             # req="order sell | CLSK@5.965 | Close position TEST",
             newOptions={"enabled": True, "limit": False, "buyTimeout": "Market", "fractional": False, **self.fastTiming}
@@ -267,7 +267,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createLimitOrderBuy(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             # req="order buy | CLSK@5.965 | Strat buy TEST",
             newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", **self.fastTiming}
@@ -278,7 +278,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_createLimitOrderSell(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             # req="order sell | CLSK@5.965 | Close position TEST",
             req="order sell | MSFT@233.41 | Close position TEST",
             newOptions={"enabled": True, "limit": True, "buyTimeout": "Market", "fractional": False, **self.fastTiming}
@@ -290,7 +290,7 @@ class TestAlpaca(unittest.TestCase):
     def test_badRequest(self):
         with self.assertRaises(Exception):
             result = AutomatedTrader(
-                **paperTrading,
+                paperTrading,
                 req="123 TEST",
                 newOptions={"enabled": True, "limit": False}
             )
@@ -298,7 +298,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_buyAmt(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             newOptions={"enabled": False, "buyPerc": 0, "testMode": False, "limit": False, "fractional": True, **self.fastTiming}
         )
@@ -309,7 +309,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_MaxPos1(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 0, "allPositions": self.debugPositions, **self.fastTiming}
         )
@@ -319,7 +319,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_MaxPos2(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 2, "allPositions": self.debugPositions, **self.fastTiming}
         )
@@ -329,7 +329,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_MaxPos3(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order buy | MSFT@233.41 | Strat buy TEST",
             newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 1, "allPositions": self.debugPositions, **self.fastTiming}
         )
@@ -340,7 +340,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_MaxPos4(self):
         result = AutomatedTrader(
-            **paperTrading,
+            paperTrading,
             req="order sell | MSFT@233.41 | Strat sell TEST",
             newOptions={"enabled": False, "limit": False, "fractional": False, "maxPositions": 1, "allPositions": self.debugPositions, **self.fastTiming}
         )
@@ -351,21 +351,21 @@ class TestAlpaca(unittest.TestCase):
     # maxTimeout failsafes
     # def test_limitBuyTimeoutCancel(self):
     #     result = AutomatedTrader(
-    #         **paperTrading,
+    #         paperTrading,
     #         req=limitTests[1],
     #         newOptions={"enabled": True, "limit": True, "buyTimeout": "Cancel"}
     #     )
 
     # def test_limitBuyTimeoutMarket(self):
     #     result = AutomatedTrader(
-    #         **paperTrading,
+    #         paperTrading,
     #         req=limitTests[1],
     #         newOptions={"enabled": True, "limit": True, "buyTimeout": "Market"}
     #     )
 
     # def test_limitSellTimeoutMarket(self):
     #     result = AutomatedTrader(
-    #         **paperTrading,
+    #         paperTrading,
     #         req=limitTests[1],
     #         newOptions={"enabled": True, "limit": True, "sellTimeout": "Market"}
     #     )

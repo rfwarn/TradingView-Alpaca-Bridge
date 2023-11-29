@@ -124,7 +124,7 @@ class AutomatedTrader:
     orders.'req' is the request that needs to be processed.
     """
 
-    def __init__(self, req="", newOptions={}):
+    def __init__(self, testAccount=None, req="", newOptions={}):
         global settings
         global settingsPaper
         global settingsReal
@@ -132,6 +132,7 @@ class AutomatedTrader:
         global accountReal
         global accountPaper
         global stocks
+        self.testAccount = testAccount
         self.asset = None
         self.options = {
             # Gets open potisions for specific stock to verify ordering. Multiple buys before selling not implemented yet.
@@ -169,6 +170,10 @@ class AutomatedTrader:
 
     def createClientAndSettings(self):
         # Creates the trading client based on real or paper account.
+        if self.testAccount != None:
+            self.options.update(settingsPaper) if self.testAccount['paper'] else self.options.update(settingsreal)
+            return TradingClient(**self.testAccount)
+            
         try:
             if self.asset['account']=='':
                 self.options.update(settings)
