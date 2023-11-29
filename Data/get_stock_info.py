@@ -24,7 +24,7 @@ except FileNotFoundError:
 finally:
     f.close()
 
-with open(filename, "r+") as f:
+with open(filename, "r") as f:
     stocks = json.load(f)
 
 
