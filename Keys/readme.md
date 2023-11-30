@@ -1,0 +1,1 @@
+Use this folder to add your code file(s) to retrieve your keys if needed. This way you can use a security management system for a cloud provider. More to come!

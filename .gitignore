@@ -19,4 +19,5 @@ userSettings.py
 *.json
 *.service
 Data/stocks.*
-getAWSsecureKeys.py
+Keys/*
+!Keys/readme.md
