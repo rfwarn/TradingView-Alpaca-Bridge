@@ -171,7 +171,7 @@ class AutomatedTrader:
     def createClientAndSettings(self):
         # Creates the trading client based on real or paper account.
         if self.testAccount != None:
-            self.options.update(settingsPaper) if self.testAccount['paper'] else self.options.update(settingsreal)
+            self.options.update(settingsPaper) if self.testAccount['paper'] else self.options.update(settingsReal)
             return TradingClient(**self.testAccount)
         elif not settings["perStockPreference"]:
             self.options.update(settings)

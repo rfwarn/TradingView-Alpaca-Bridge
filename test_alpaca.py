@@ -117,6 +117,12 @@ class TestAlpaca(unittest.TestCase):
                 realTrading, req="", newOptions={"fractional": True, "limit": True}
             )
 
+    def test_validateRealKeys(self):
+        # Test to see if keys are valid
+        AutomatedTrader(
+            realTrading, req="order sell | MSFT@337.57 | TEST", newOptions={"enabled": False, "perStockPreference": False}
+        )
+
     def test_data1(self):
         # Testing of the different predefined alert types.
         result = AutomatedTrader(
