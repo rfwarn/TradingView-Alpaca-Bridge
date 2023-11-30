@@ -173,6 +173,9 @@ class AutomatedTrader:
         if self.testAccount != None:
             self.options.update(settingsPaper) if self.testAccount['paper'] else self.options.update(settingsreal)
             return TradingClient(**self.testAccount)
+        elif not settings["perStockPreference"]:
+            self.options.update(settings)
+            return TradingClient(**account)
             
         try:
             if self.asset['account']=='':

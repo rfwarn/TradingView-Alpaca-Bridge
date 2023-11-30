@@ -4,6 +4,12 @@ options = {
     # "using": "realTrading",
     # Settings for paperTrading.
     "paperTrading": {
+        # Allow for individual stock account preference. When set to True, if a stock in Data/stocks.json has the account 
+        #   as 'real' or 'paper', it will use that account for the transaction. Using the Data/get_stock_info.py with an 
+        #   argument of an individual ('JPM') or list (['JPM','ORCL']) will add the stock to stocks.json then edit the file 
+        #   and change the default value of '' to the preferred account. This allows individual stock control when the performance 
+        #   of the paper account is adaquate to test with the real account. Accounts respect the individualized settings in the settings file.
+        "perStockPreference": False,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
