@@ -5,16 +5,6 @@ try:
 except ModuleNotFoundError:
     pass
 
-def getSecureKeys():
-    # Try to get secure keys if they exist.
-    try:
-        keys = get_secret()
-    except Exception as e:
-        print(e)
-    # for key, value in keys.items():
-    #     os.environ[key] = value
-    return keys
-    
 def getKeys(account):
     """Retrives the keys for either the "paperTrading" or "realTrading" account.
     Pass in either "paperTrading" or "realTrading" and it will return the keys and paper setting.
@@ -25,6 +15,16 @@ def getKeys(account):
     }"""
     load_dotenv(override=True)
     
+    def getSecureKeys():
+        # Try to get secure keys if they exist.
+        try:
+            keys = get_secret()
+        except Exception as e:
+            print(e)
+            return
+        # for key, value in keys.items():
+        #     os.environ[key] = value
+        return keys
     
     # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
     keys = {}
