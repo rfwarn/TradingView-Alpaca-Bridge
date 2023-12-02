@@ -32,13 +32,12 @@ def getKeys(account):
         # Paper trading
         if not os.environ.get("Alpaca_API_KEY"):
             keys = getSecureKeys()
-            # return account
         else:
             keys['Alpaca_API_KEY'] = os.environ.get("Alpaca_API_KEY")
             keys['Alpaca_SECRET_KEY'] = os.environ.get("Alpaca_SECRET_KEY")
         paperTrading = {
             "api_key": keys['Alpaca_API_KEY'],
-            "secret_key": keys['Alpaca_API_KEY'],
+            "secret_key": keys['Alpaca_SECRET_KEY'],
             "paper": True,
         }
         account = paperTrading
@@ -46,7 +45,6 @@ def getKeys(account):
         # Real money trading
         if not os.environ.get("Alpaca_API_KEY-real"):
             keys = getSecureKeys()
-            # return account
         else:
             keys['Alpaca_API_KEY-real'] = os.environ.get("Alpaca_API_KEY-real")
             keys['Alpaca_SECRET_KEY-real'] = os.environ.get("Alpaca_SECRET_KEY-real")
