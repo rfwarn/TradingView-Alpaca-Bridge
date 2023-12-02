@@ -1,1 +1,3 @@
 Use this folder to add your code file(s) to retrieve your keys if needed. This way you can use a security management system for a cloud provider. More to come!
+
+Name the file "getSecureKeys.py" and add it the provider's code to retrieve your secure keys. Name the function "get_secret()". Return the keys as an object for paper and/or real keys in the main readme. If using this don't use the .env file for keys.
