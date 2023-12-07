@@ -4,26 +4,30 @@ This project is a python program that connects TradingView alerts with Alpaca AP
 
 **Operation:**
 
-- Built on python 3.11. Tested and works natively on windows 10/11 and Amazon Linux 2023. Docker not recommended but there if you want to use it.
-- Settings are located in [settings.py](settings.py). AlpacaTVBridge needs to be restarted for any changes in settings to take effect.
+- Built on python 3.11. Tested and works natively on windows 10/11 and Amazon Linux 2023 using Python 3.9. Docker not recommended or thoroughly tested, but there if you want to use it.
+- Settings are located in [default_settings.py](default_settings.py). AlpacaTVBridge needs to be restarted for any changes in settings to take effect.
+  - WARNING: If changing from real back to paper trading and vice versa in the main settings or per stock settings, make sure you close out your current positions if there are any open for the stocks being changed as the program doesn't check or account for changes like that.
+  - Copy defaultSettings.py to settings.py so future updates don't change your settings.
 - Best use case currently is opening and closing long positions.
-- Uses TradingView webhook. Can use [ngrok](https://ngrok.com/), a cloud service (Links to come!), etc. to connect webhook trigger to order action on Alpaca.
+- Uses TradingView webhook. Can use [ngrok](https://ngrok.com/), a cloud service (Links and examples to come!), etc. to connect webhook trigger to order action on Alpaca using their API.
   - Add the following to the beginning of a strategy/indicator alert for buying/selling order: `{{strategy.order.action}} | {{ticker}}@{{close}} | {{strategy.order.id}} `...
-- Sets position size by incoming price from alpaca and settings (I like it this way to more accurately use backtesting in tradingview without having to worry about a wrong setting on that end).
-  - Currently only buys and sells whole number amounts. Fractional trading will be added later.
-- If there's already an open order, it will cancel it and place new order as long as there is no position for buying, etc. 
-- Only two order types are sent to Alpaca (Market and Limit). Anything else will need to be handled in Tradingview programatically with alerts. Generally I like to have a strategy with a Buy, Sell, and Stoploss alert. This also gives you the ability to do things that a direct trade from Tradingview to Alapca that you don't typically have like a trailing stop, but it has to be coded in.
-- Stop loss and other similar features need to be handled in pine scripts.
-- Cancels any open order for the specified stock if another order is received then processes new order.
+- Sets position size by incoming price from alpaca and settings (I like it this way to more accurately use backtesting in TradingView without having to worry about a wrong setting on that end). For example, if a buy alert for MSFT triggers, the price will be passed to the main app where it will divide the amount that you apportioned in the settings. If this was $2,000 per trade and the stock was $200, it would submit an order to buy 10 shares.
+  - Fractional trading has been added, but needs more testing first. 
+  - Fractional trades that are attempted on a stock that doesn't allow it will not complete the trade.
+  - If there's already an open order, it will cancel it and place new order as long as there is no position for buying, etc. 
+  - If there's already an open position, it will not order more. This is to prevent unintended overbuying.
+- Only two order types are sent to Alpaca (Market and Limit). Anything else will need to be handled in TradingView programatically with alerts (like Stoploss selling). Generally I like to have a strategy with a Buy, Sell, and Stoploss alert. This also gives you the ability to do things you can't typically do in Alpaca like having a trailing stop, but it has to be coded in TradingView.
+  - Stop loss and other similar features need to be handled in pine scripts.
+- Cancels any open order for the specified stock if another order is received then processes the new order.
   - Buying 
     - Any open order for that stock will be canceled and a new one created.
     - This help for fast market movements on limit orders or if there are other open trades placed outside this program.
     - If you already have a position with the stock you are buying/selling, no order will be placed to prevent overbuying. No pyramiding is possible at this time with this program.
   - Shorting
-    - Can short but need to improve algorithms for it.
+    - Can short if that's all your doing but need to improve the code for it. Need more extensive testing for this as well.
 - Checks position before shorting/going long to prevent overbuying/overselling.
 - Buy price is received from TradingView webhook for position size calculation based on user settings.
-- Great for trying strategies out with paper trading. Use at your own risk for real trading. Should work but haven't tested it much yet in real money trading. I'll update after trying it out.
+- Great for trying strategies out with paper trading. Use at your own risk for real trading. Working for real trading, but use with caution and read the settings carefully.
 - Generate report will create a CSV 30 day report (default) for buying and selling with alpaca paper or real stocks.
 - Compatible with jdehorty's **'Machine Learning: Lorentzian Classification'** indicator alerts (match Close Long, Open Long, etc. when creating alerts).
   - Ex. <font color=orange>LDC Kernel Bullish ▲ | CLSK@4.015 | (1)</font>...
