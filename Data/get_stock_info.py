@@ -1,5 +1,7 @@
 """ Retrieves stock information (like if it accepts fractional trades) for quick reference and stores it in stocks.json.
-Entered as an arguement individually (get_stock_info.py -a ex1) in the terminal or as a list (get_stock_info.py -a 'ex1, ex2, etc...')."""
+Set or clear stock account preference. When enabled in the settings, this allows for stocks to be selectively bought and 
+sold on either rea or paper accounts. Clearing will default to what the settings "using" is set to. Entered as an arguement 
+individually (get_stock_info.py -a ex1) in the terminal or as a list (get_stock_info.py -a 'ex1, ex2, etc...')."""
 import requests
 import sys
 import os
