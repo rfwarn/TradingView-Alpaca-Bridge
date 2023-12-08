@@ -52,6 +52,8 @@ except Exception as e:
 
 
 class StockUpdater:
+    """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it will overwrite the saved list (stocks.json)."""
+
     def __init__(self, stocklist=[], write=True):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
@@ -71,6 +73,7 @@ class StockUpdater:
             raise Exception(f"stockSplitter received wrong type {type(assetList)}")
         sorted(self.stocklist, key=lambda stock: stock["symbol"])
         self.writeStockInfo()
+        return self.stocklist
 
     def Multistock(self, assetList):
         # Parses a list of stocks and uses getSockInfo function to retrieve informaion.
@@ -138,20 +141,23 @@ class StockUpdater:
             print(f"Stock not found in stocks list to remove: {asset}")
 
     def writeStockInfo(self):
+        self.sort()
         if self.write:
-            self.sort()
             with open(filename, "w+") as f:
                 json.dump(self.stocklist, f, indent=4)
 
-    def getAccountPreference(self):
+    def printAccountPreference(self):
         if self.stocklist == []:
-            print("Empty stocks list")
-            return
+            empty = "Empty stocks list"
+            print(empty)
+            return empty
         self.sort()
+        allstocks = []
         real = []
         paper = []
         neither = []
         for stock in self.stocklist:
+            allstocks.append(stock["symbol"])
             if stock["account"] == "":
                 neither.append(stock["symbol"])
             elif stock["account"].upper() == "real".upper():
@@ -162,31 +168,46 @@ class StockUpdater:
                 print(
                     f'Problem found. Stock "{stock}" does not have account setting. Try removing and adding it again.'
                 )
-        print(f"No preference: {neither},\nreal: {real},\npaper: {paper}")
+        print(
+            f"-----------",
+            f"\nAll stocks: {allstocks}\n--------------------------------------------------------------",
+            f"\nNo preference: {neither},\nreal: {real},\npaper: {paper}",
+            f"\n-----------",
+        )
 
-    def setAccountPreference(self, arg, accountPref):
+    def setAccountPreference(self, newStocks, accountPref):
+        def printPrefChange(stock, pref):
+            print(f"Stock preference for: {stock}, set to {pref if pref else 'clear'}")
+
         # Set or clear stock account preferences.
         changed = False
-        if isinstance(arg, list):
-            for stock in arg:
+        if isinstance(newStocks, list):
+            for stock in newStocks:
                 stockPref = self.findStock(stock)
                 if stockPref:
                     stockPref["account"] = accountPref
+                    printPrefChange(stock, accountPref)
                     changed = True
                 else:
                     print(f"Stock not found for: {stock}")
-        elif isinstance(arg, str):
-            stockPref = self.findStock(arg)
+                    self.stockSplitter(stock)
+        elif isinstance(newStocks, str):
+            stockPref = self.findStock(newStocks)
             if stockPref:
                 stockPref["account"] = accountPref
+                printPrefChange(newStocks, accountPref)
                 changed = True
             else:
-                print(f"Stock not found for: {arg}")
+                print(f"Stock not found for: {newStocks}")
                 return
         else:
-            raise Exception(f"setAccountPreference received wrong type {type(arg)}")
+            raise Exception(
+                f"setAccountPreference received wrong type {type(newStocks)}"
+            )
         if changed:
             self.writeStockInfo()
+        else:
+            return "No changes made"
 
 
 def getListOrString(arg1):
@@ -224,4 +245,4 @@ if __name__ == "__main__":
         manualStock.setAccountPreference(newArgs, "real")
     else:
         # Print the list of stocks account preferences if no arguments are given.
-        manualStock.getAccountPreference()
+        manualStock.printAccountPreference()
