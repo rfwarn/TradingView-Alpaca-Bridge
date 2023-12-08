@@ -43,6 +43,7 @@ parser.add_argument(
 )
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
+parser.add_argument("-v", "--verify", action="store_true", help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't")
 
 # parse arguments
 try:
@@ -105,18 +106,31 @@ class StockUpdater:
             return None
 
     def updateStockInfo(self, asset):
-        # Adds or updates one asset. Adds account key to asset dictionary for user account preference ("paper", "real"). Also updates the asset data if there are changes.
+        # Adds or updates one asset at a time. Adds account key to asset dictionary for user account preference 
+        # ("paper", "real"). Also updates the asset data if there are changes.
         print(f"Adding stock: {asset['symbol']}")
         for n, stock in enumerate(self.stocklist):
             if asset["symbol"] == stock["symbol"]:
                 if not "account" in stock:
                     self.stocklist[n]["account"] = ""
+                if not "amount" in stock:
+                    self.stocklist[n]["amount"] = 0
                 self.stocklist[n].update(asset)
                 break
         else:
             asset["account"] = ""
             self.stocklist.append(asset)
         return
+    def verifyStockPreferences(self):
+        # Verifies amount and account settings are present and adds them if they aren't.
+        for stock in self.stocklist:
+            if not "account" in stock:
+                stock["account"] = ""
+                print(f"Added blank account for: {stock['symbol']}")
+            if not "amount" in stock:
+                stock["amount"] = 0
+                print(f"Added blank amount for: {stock['symbol']}")
+        self.writeStockInfo()
 
     def stockRemover(self, asset):
         # removes individual stocks or a list of stocks. Main app
@@ -145,6 +159,8 @@ class StockUpdater:
         if self.write:
             with open(filename, "w+") as f:
                 json.dump(self.stocklist, f, indent=4)
+        else:
+            print('Write not enabled')
 
     def printAccountPreference(self):
         if self.stocklist == []:
@@ -243,6 +259,8 @@ if __name__ == "__main__":
     elif args.real:
         newArgs = getListOrString(args.real)
         manualStock.setAccountPreference(newArgs, "real")
+    elif args.verify:
+        manualStock.verifyStockPreferences()
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()
