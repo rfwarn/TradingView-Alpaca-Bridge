@@ -5,8 +5,9 @@ This project is a python program that connects TradingView alerts with Alpaca AP
 **Operation:**
 
 - Built on python 3.11. Tested and works natively on windows 10/11 and Amazon Linux 2023 using Python 3.9. Docker not recommended or thoroughly tested, but there if you want to use it.
+- **CAUTION**: Do not run tests during trading hours. By design, it should only be placing orders with the paper account, but if you are doing analysis on it that could skew the results if not caught.
 - Settings are located in [default_settings.py](default_settings.py). AlpacaTVBridge needs to be restarted for any changes in settings to take effect.
-  - WARNING: If changing from real back to paper trading and vice versa in the main settings or per stock settings, make sure you close out your current positions if there are any open for the stocks being changed as the program doesn't check or account for changes like that.
+  - **WARNING**: If changing from real back to paper trading and vice versa in the main settings or per stock settings, make sure you close out your current positions if there are any open for the stocks being changed as the program doesn't check or account for changes like that.
   - Copy defaultSettings.py to settings.py so future updates don't change your settings.
 - Best use case currently is opening and closing long positions.
 - Uses TradingView webhook. Can use [ngrok](https://ngrok.com/), a cloud service (Links and examples to come!), etc. to connect webhook trigger to order action on Alpaca using their API.
@@ -59,7 +60,21 @@ Alpaca_SECRET_KEY-real=XCVJH...
 **Basic setup example:**
 
 #### Here are the steps I took to move this app to a cloud instance:
-I went with EC2 by Amazon AWS for no reason in particular. You could use Azure, Google Cloud, etc. I recommend setting up the security groups to only only traffic from TradingView and computers you want to access it from. I do not recommend running it in a docker becuase it takes up a lot more resources and doesn't seem necessary, but I could be wrong.
+I went with EC2 by Amazon AWS for no reason in particular. You could use Azure, Google Cloud, etc. 
+  - I recommend setting up the security groups to only only traffic from TradingView and computers you want to access it from. 
+  - I do not recommend running it in a docker becuase it takes up a lot more resources and doesn't seem necessary, but I could be wrong.
+  - Create an instance (micro is more than enough for this), update it and install git.
+  - Clone the repo locally.
+  - Install the requirements.txt
+  - Add the keys to a providers service (Secrets Manager for AWS) and make sure the instance can access them by giving it the right permissions.
+  - Add a "getSecureKeys.py" scipt in the Keys folder that returns keys in object format. The provider should give you this code to retrieve these keys. Add them as they appear in the example above.
+
+I used NGINX to recieve my TradingView webhooks using SSL. 
+  - Use the reverse proxy option from NGINX to pass the webhooks locally to this app which will use the Alpaca API to place orders.
+  - I used certbot for the SSL cert.
+
+Put it all together
+  - Use a Python script or Jupyter Notebook to send a test post request to your server to make sure it can be reached and tries to make an order.
 
 to be continued...
 ***
