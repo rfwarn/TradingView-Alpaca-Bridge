@@ -11,12 +11,12 @@ options = {
         #   of the paper account is adaquate to test with the real account. Accounts respect the individualized settings in the settings file.
         "perStockPreference": True,
         # Not implemented yet...
-        # Allow for individual stock amount ($USD) preference per stock. Setting to 0 will disable this option. 
+        # Allow for individual stock amount ($USD) preference per stock. Setting to False will disable this option. 
         #   This will also track the amount you have gained of lost with the particular stock after a trady allowing 
         #   for compounding gains/losses on individual stocks. 
         # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to 
         #   2200 which is how much it would spend buying the stock next time. 
-        "perStockAmount": 0,
+        "perStockAmount": False,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
