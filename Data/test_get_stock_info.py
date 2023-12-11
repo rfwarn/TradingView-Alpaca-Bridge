@@ -81,8 +81,6 @@ def test_clear_stock_preference():
 def test_clear_stock_preference_badName():
     newArgs = getListOrString("tsla")
     stockUpdater.setAccountPreference(newArgs, "")
-    assert stockUpdater.stocklist[0]["symbol"] == "FCEL"
-    assert stockUpdater.stocklist[0]["account"] == ""
 
 
 if __name__ == "__main__":

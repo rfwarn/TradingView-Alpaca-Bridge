@@ -26,8 +26,8 @@ except FileNotFoundError:
 finally:
     f.close()
 
-with open(filename, "r") as f:
-    stocks = json.load(f)
+# with open(filename, "r") as f:
+#     stocks = json.load(f)
 
 # create an argument parser
 parser = argparse.ArgumentParser(
@@ -43,7 +43,12 @@ parser.add_argument(
 )
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
-parser.add_argument("-v", "--verify", action="store_true", help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't")
+parser.add_argument(
+    "-v",
+    "--verify",
+    action="store_true",
+    help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't",
+)
 
 # parse arguments
 try:
@@ -60,6 +65,13 @@ class StockUpdater:
         self.stocklist = stocklist
         # Added for testing purposes so it doesn't make changes.
         self.write = write
+
+    def getStockList(self):
+        # Gets the list from the stocks.json file and loads them into stocklist.
+        with open(filename, "r") as f:
+            stocks = json.load(f)
+        self.stocklist = stocks
+        return stocks
 
     def sort(self):
         list.sort(self.stocklist, key=lambda stock: stock["symbol"])
@@ -106,7 +118,7 @@ class StockUpdater:
             return None
 
     def updateStockInfo(self, asset):
-        # Adds or updates one asset at a time. Adds account key to asset dictionary for user account preference 
+        # Adds or updates one asset at a time. Adds account key to asset dictionary for user account preference
         # ("paper", "real"). Also updates the asset data if there are changes.
         print(f"Adding stock: {asset['symbol']}")
         for n, stock in enumerate(self.stocklist):
@@ -121,6 +133,7 @@ class StockUpdater:
             asset["account"] = ""
             self.stocklist.append(asset)
         return
+
     def verifyStockPreferences(self):
         # Verifies amount and account settings are present and adds them if they aren't.
         for stock in self.stocklist:
@@ -153,6 +166,10 @@ class StockUpdater:
                 break
         else:
             print(f"Stock not found in stocks list to remove: {asset}")
+    
+    def setStockAmount(self):
+        # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
+        pass
 
     def writeStockInfo(self):
         self.sort()
@@ -160,7 +177,7 @@ class StockUpdater:
             with open(filename, "w+") as f:
                 json.dump(self.stocklist, f, indent=4)
         else:
-            print('Write not enabled')
+            print("Write not enabled")
 
     def printAccountPreference(self):
         if self.stocklist == []:
@@ -192,6 +209,7 @@ class StockUpdater:
         )
 
     def setAccountPreference(self, newStocks, accountPref):
+        # Function to print stock preference changes.
         def printPrefChange(stock, pref):
             print(f"Stock preference for: {stock}, set to {pref if pref else 'clear'}")
 
@@ -242,7 +260,9 @@ def getListOrString(arg1):
 
 if __name__ == "__main__":
     # Allows for adding, removing, and setting of stock preferences for account (paper/real)
-    manualStock = StockUpdater(stocks)
+    # manualStock = StockUpdater(stocks)
+    manualStock = StockUpdater()
+    manualStock.getStockList()
     newArgs = ""
     if args.add:
         newArgs = getListOrString(args.add)
