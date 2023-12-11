@@ -39,11 +39,15 @@ account = getKeys(options["using"])
 accountReal = getKeys("realTrading")
 accountPaper = getKeys("paperTrading")
 
-# Load stocks
+# Load stocks initially
 path = os.path.dirname(__file__)
 with open(path + os.sep + "Data/stocks.json", "r") as f:
     stocks = json.load(f)
-# teste = StockUpdater()
+
+# Load stock program
+stockUpdater = StockUpdater()
+stockUpdater.getStockList()
+
 
 # Load settings
 def loadSettings(paper, real, using):
@@ -144,12 +148,12 @@ class AutomatedTrader:
             # Gets all the open orders.
             "allOrders": [],
         }
-        
+
         # Set request data and stock info.
         self.req = req
         self.setData()
         self.setStockInfo()
-        
+
         # Use settings if they were imported successfully. More of a debug test since it fails if it's not there and it should be there.
         # self.options.update(settings)
         self.client = self.createClientAndSettings()
@@ -169,31 +173,35 @@ class AutomatedTrader:
             self.createOrder()
 
     def createClientAndSettings(self):
-        # Creates the trading client based on real or paper account.
+        # Creates the trading client based on real or paper account for testing purposes.
         if self.testAccount != None:
-            self.options.update(settingsPaper) if self.testAccount['paper'] else self.options.update(settingsReal)
+            self.options.update(settingsPaper) if self.testAccount[
+                "paper"
+            ] else self.options.update(settingsReal)
             return TradingClient(**self.testAccount)
         elif not settings["perStockPreference"]:
             self.options.update(settings)
             return TradingClient(**account)
-            
+
         try:
-            if self.asset['account']=='':
+            if self.asset["account"] == "":
                 self.options.update(settings)
                 return TradingClient(**account)
-            elif self.asset['account'].upper()=='real'.upper():
+            elif self.asset["account"].upper() == "real".upper():
                 self.options.update(settingsReal)
                 return TradingClient(**accountReal)
-            elif self.asset['account'].upper()=='paper'.upper():
+            elif self.asset["account"].upper() == "paper".upper():
                 self.options.update(settingsPaper)
                 return TradingClient(**accountPaper)
             else:
-                logger.warning(f'Invalid stock account setting in stocks.json: {self.data["stock"]}. Defaulting to user settings.')
+                logger.warning(
+                    f'Invalid stock account setting in stocks.json: {self.data["stock"]}. Defaulting to user settings.'
+                )
                 self.options.update(settings)
                 return TradingClient(**account)
         except TypeError:
-                self.options.update(settings)
-                return TradingClient(**account)
+            self.options.update(settings)
+            return TradingClient(**account)
 
     def setData(self):
         # requests parsed for either Machine Learning: Lorentzian
@@ -225,7 +233,9 @@ class AutomatedTrader:
         elif len(extractedData.groups()) == 4:
             self.data = {
                 "action": extractedData.group(1),
-                "position": extractedData.group(2),
+                "position": extractedData.group(2).upper()
+                if extractedData.group(2) != None
+                else extractedData.group(2),
                 "stock": extractedData.group(3),
                 "price": float(extractedData.group(4)),
             }
@@ -241,8 +251,11 @@ class AutomatedTrader:
 
     def setStockInfo(self):
         for item in stocks:
-            if item['symbol']==self.data['stock']:
+            if item["symbol"] == self.data["stock"]:
                 self.asset = item
+                # Check if option is enabled and amount in stocks.json is not 0. This allows isolated movements potentially returning higher yields.
+                # if self.options["perStockAmount"] and float(self.asset["amount"]) != 0:
+                #     self.options["buyAmt"] = float(item["amount"])
                 break
 
     def setPosition(self):
@@ -308,7 +321,7 @@ class AutomatedTrader:
 
         # Setup for buy/sell/open/close/bear/bull/short/long.
         # Open a short position.
-        if self.data["action"] == "Open" and self.data["position"] == "Short":
+        if self.data["action"] == "Open" and self.data["position"] == "Short".upper():
             side = OrderSide.SELL
             # Close if shorting not enabled. Need to adjust for positive and negative positions. Done?
             if posQty < 0:
@@ -337,7 +350,9 @@ class AutomatedTrader:
                 amount = 0
                 return
         # Close a short position.
-        elif self.data["action"] == "Close" and self.data["position"] == "Short":
+        elif (
+            self.data["action"] == "Close" and self.data["position"] == "Short".upper()
+        ):
             side = OrderSide.BUY
             # Close positions for symbol
             if posQty > 0:
@@ -355,7 +370,9 @@ class AutomatedTrader:
             self.data["action"].upper() == "Bull".upper()
             or self.data["action"].upper() == "buy".upper()
             or self.data["action"].upper() == "Open".upper()
-        ) and (self.data["position"] == "Long" or self.data["position"] == None):
+        ) and (
+            self.data["position"] == "Long".upper() or self.data["position"] == None
+        ):
             side = OrderSide.BUY
             if self.options["positions"] != None:
                 amount = 0
@@ -364,7 +381,9 @@ class AutomatedTrader:
             self.data["action"].upper() == "Bear".upper()
             or self.data["action"].upper() == "sell".upper()
             or self.data["action"].upper() == "Close".upper()
-        ) and (self.data["position"] == "Long" or self.data["position"] == None):
+        ) and (
+            self.data["position"] == "Long".upper() or self.data["position"] == None
+        ):
             side = OrderSide.SELL
             # Close positions for symbol. Setting to 0 so it won't run if there's already a position.
             amount = 0
@@ -465,7 +484,6 @@ class AutomatedTrader:
         self.order = self.client.submit_order(self.order_data)
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
-        # Need to add while look that checks if the order finished. if limit sell failed, change to market order or something like that. For buy just cancel or maybe open limit then cancel?
 
     def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
@@ -586,6 +604,12 @@ class AutomatedTrader:
                 f'Order filled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return True
+
+    def updateStockAmount(self):
+        # Updates stocks.json data with new stock amount after selling.
+        # TODO: Might need to look at retriving the order after to make sure the data is accurate.
+        self.asset["amount"] = self.data["price"] * self.order_data.qty
+        stockUpdater
 
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:

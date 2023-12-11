@@ -146,7 +146,8 @@ class TestAlpaca(unittest.TestCase):
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
-        self.assertEqual(result.data["position"], "Long")
+        # self.assertEqual(result.data["position"], "Long")
+        self.assertEqual(result.data["position"], "Long".upper())
         self.assertEqual(result.data["stock"], "MSFT")
         self.assertEqual(result.data["price"], 327.3)
 
@@ -156,7 +157,8 @@ class TestAlpaca(unittest.TestCase):
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
-        self.assertEqual(result.data["position"], "Long")
+        # self.assertEqual(result.data["position"], "Long")
+        self.assertEqual(result.data["position"], "Long".upper())
         self.assertEqual(result.data["stock"], "CLSK")
         self.assertEqual(result.data["price"], 4.015)
 
@@ -166,7 +168,8 @@ class TestAlpaca(unittest.TestCase):
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
-        self.assertEqual(result.data["position"], "Short")
+        # self.assertEqual(result.data["position"], "Short")
+        self.assertEqual(result.data["position"], "Short".upper())
         self.assertEqual(result.data["stock"], "CLSK")
         self.assertEqual(result.data["price"], 4.015)
 
@@ -176,7 +179,8 @@ class TestAlpaca(unittest.TestCase):
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
-        self.assertEqual(result.data["position"], "Short")
+        # self.assertEqual(result.data["position"], "Short")
+        self.assertEqual(result.data["position"], "Short".upper())
         self.assertEqual(result.data["stock"], "CLSK")
         self.assertEqual(result.data["price"], 4.01)
 
