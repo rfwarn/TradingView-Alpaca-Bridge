@@ -4,28 +4,28 @@ options = {
     # "using": "realTrading",
     # Settings for paperTrading.
     "paperTrading": {
-        # Allow for individual stock account preference. When set to True, if a stock in Data/stocks.json has the account 
-        #   as 'real' or 'paper', it will use that account for the transaction. Using the Data/get_stock_info.py with an 
-        #   argument of an individual ('JPM') or list (['JPM','ORCL']) will add the stock to stocks.json then edit the file 
-        #   and change the default value of '' to the preferred account. This allows individual stock control when the performance 
+        # Allow for individual stock account preference. When set to True, if a stock in Data/stocks.json has the account
+        #   as 'real' or 'paper', it will use that account for the transaction. Using the Data/get_stock_info.py with an
+        #   argument of an individual ('JPM') or list (['JPM','ORCL']) will add the stock to stocks.json then edit the file
+        #   and change the default value of '' to the preferred account. This allows individual stock control when the performance
         #   of the paper account is adaquate to test with the real account. Accounts respect the individualized settings in the settings file.
         "perStockPreference": True,
         # Not implemented yet...
-        # Allow for individual stock amount ($USD) preference per stock. Setting to False will disable this option. 
-        #   This will also track the amount you have gained of lost with the particular stock after a trady allowing 
-        #   for compounding gains/losses on individual stocks. 
-        # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to 
-        #   2200 which is how much it would spend buying the stock next time. 
+        # Allow for individual stock amount ($USD) preference per stock. Setting to False will disable this option.
+        #   This will also track the amount you have gained of lost with the particular stock after a trady allowing
+        #   for compounding gains/losses on individual stocks.
+        # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to
+        #   2200 which is how much it would spend buying the stock next time.
         "perStockAmount": False,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
-        # Set to percentage of the cash balance (0.2 = 20%, 0.02 = 2%...). If useMarinBuyingPower is >0, margin will also be factored in. 
+        # Set to percentage of the cash balance (0.2 = 20%, 0.02 = 2%...). If useMarinBuyingPower is >0, margin will also be factored in.
         # Useful in paper testing if you have around 5 stock alerts you want to analyze.
-        # Be careful, if more than one order is going through at the the same time, 
+        # Be careful, if more than one order is going through at the the same time,
         #   it may spend over the total cash available and go into margins. Mainly a potential problem in real money trading.
-        # Limits the amount of positions open at a time to help prevent overspending. Set to 0 to disable limit. 
-        #   Warning, if more than one order is processed before the others complete, it may exceed the maximum limit. 
+        # Limits the amount of positions open at a time to help prevent overspending. Set to 0 to disable limit.
+        #   Warning, if more than one order is processed before the others complete, it may exceed the maximum limit.
         #   High frequency algorithms and/or multiple alerts on different stock (~8 or more) are more likely to cause this since they trigger more often.
         "maxPositions": 0,
         # If testMode is enabled, it uses the % of 100000 (Ex. 0.2 = 20%, 0.02 = 2%...).
@@ -82,3 +82,46 @@ options = {
         "fractional": False,
     },
 }
+
+# TODO: Maybe create args for updating settings.py if it exists, to just overwrite it, and add it if it doesn't exist.
+if __name__ == "__main__":
+    import os, filePath
+
+    def getSettings(paper, real):
+        paper = paper.copy()
+        pc = paper.copy()
+        pc.update(real)
+        if len(pc) != len(paper):
+            raise Exception(
+                "Extra variables found in real settings. Please remove or fix any typos and try again"
+            )
+        else:
+            # print(f"Extra settings check pass for: {filePath.fileName(__file__)}")
+            pass
+        return pc, paper
+
+    real, paper = getSettings(options["paperTrading"], options["realTrading"])
+    if filePath.fileName(__file__) == "default_settings.py":
+        try:
+            from settings import options as settingsFile
+
+            setReal, setPaper = getSettings(
+                settingsFile["paperTrading"], settingsFile["realTrading"]
+            )
+            if len(setPaper) > len(paper):
+                raise Exception(
+                    "Too many settings found in settings.py in the paperTrading section"
+                )
+            elif len(setPaper) < len(paper):
+                print("Found a missing setting in paperSettings")
+            elif len(setReal) > len(real):
+                raise Exception(
+                    "Too many settings found in settings.py in the realTrading section"
+                )
+            elif len(setReal) < len(real):
+                print("Found a missing setting in realSettings")
+            else:
+                print("Settings length looks good")
+        except ModuleNotFoundError:
+            print("No settings file found. Creating...")
+            os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
