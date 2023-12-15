@@ -137,9 +137,9 @@ if __name__ == "__main__":
                 print("Found a missing setting in realSettings")
             else:
                 if validateKeys(paper, setPaper, "Paper"):
-                    print("--Paper settings looks good")
+                    print("--Paper settings look good")
                 if validateKeys(real, setReal, "Real"):
-                    print("--Real settings looks good")
+                    print("--Real settings look good")
         except ModuleNotFoundError:
             print("No settings file found. Creating...")
             os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
