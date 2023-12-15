@@ -100,6 +100,21 @@ if __name__ == "__main__":
             pass
         return pc, paper
 
+    def validateKeys(itemsA, itemsB, name):
+        # Checks if all keys from itemA are in itemB. Then checks is any of the values are different
+        status = True
+        for k, v in itemsA.items():
+            if not k in itemsB.keys():
+                # raise Exception(f'Missing key found in settings.py {name} settings: {k}')
+                status = False
+                print(f"Missing key found in settings.py {name} settings: {k}")
+            else:
+                if itemsB[k] != v:
+                    print(f"{name} setting: {itemsB[k]}, default: {v}")
+        if status:
+            return True
+        return False
+
     real, paper = getSettings(options["paperTrading"], options["realTrading"])
     if filePath.fileName(__file__) == "default_settings.py":
         try:
@@ -121,7 +136,10 @@ if __name__ == "__main__":
             elif len(setReal) < len(real):
                 print("Found a missing setting in realSettings")
             else:
-                print("Settings length looks good")
+                if validateKeys(paper, setPaper, "Paper"):
+                    print("--Paper settings looks good")
+                if validateKeys(real, setReal, "Real"):
+                    print("--Real settings looks good")
         except ModuleNotFoundError:
             print("No settings file found. Creating...")
             os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
