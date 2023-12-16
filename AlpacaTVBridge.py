@@ -128,7 +128,7 @@ class AutomatedTrader:
     orders.'req' is the request that needs to be processed.
     """
 
-    def __init__(self, testAccount=None, req="", newOptions={}):
+    def __init__(self, testAccount=None, req="", newOptions={}, testStocklist=[]):
         global settings
         global settingsPaper
         global settingsReal
@@ -136,6 +136,7 @@ class AutomatedTrader:
         global accountReal
         global accountPaper
         global stocks
+        self.testStocklist = testStocklist
         self.testAccount = testAccount
         self.asset = None
         self.options = {
@@ -250,13 +251,18 @@ class AutomatedTrader:
         self.options["orders"] = self.client.get_orders(stock)
 
     def setStockInfo(self):
-        for item in stocks:
+        if self.testStocklist:
+            newStocks = self.testStocklist
+        else:
+            newStocks = stocks
+        for item in newStocks:
             if item["symbol"] == self.data["stock"]:
                 self.asset = item
                 # Check if option is enabled and amount in stocks.json is not 0. This allows isolated movements potentially returning higher yields.
                 # if self.options["perStockAmount"] and float(self.asset["amount"]) != 0:
                 #     self.options["buyAmt"] = float(item["amount"])
-                break
+                return item
+                # break
 
     def setPosition(self):
         # get stock positions
@@ -297,6 +303,10 @@ class AutomatedTrader:
         elif self.options["buyPerc"] == 0 and self.options["buyAmt"] > 0:
             self.options["balance"] = self.options["buyAmt"]
 
+        if float(self.asset['amount'])!=0:
+            self.options["buyAmt"] = float(self.asset['amount'])
+
+        # Multiplies the balance * buyPerc in the settings if >0 and that's what it uses to buy with.
         # Fractional shares to buy.
         amount = float(
             self.options["balance"] * self.options["buyPerc"] / self.data["price"]
@@ -304,20 +314,8 @@ class AutomatedTrader:
             else self.options["buyAmt"] / self.data["price"]
         )
         if not self.options["fractional"]:
-            # Multiplies the balance * buyPerc in the settings if >0 and that's what it uses to buy with.
             # Whole number shares to buy if fractional is not enabled. Rounds down.
             amount = int(amount)
-            # amount = float(
-            #     self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-            #     if self.options["buyPerc"] > 0
-            #     else self.options["buyAmt"] / self.data["price"]
-            # )
-        # else:
-            # amount = int(
-            #     self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-            #     if self.options["buyPerc"] > 0
-            #     else self.options["buyAmt"] / self.data["price"]
-            # )
 
         # get position quantity
         posQty = (
@@ -464,7 +462,7 @@ class AutomatedTrader:
         try:
             self.order_data
         except AttributeError:
-            return
+            return "failed to process order. Order data doesn't exist."
 
         # Logic to factor in max position if enabled. Creates a log warning if positions exceed max. If it's at the max it won't buy
         if self.order_data.side == OrderSide.BUY:
@@ -491,6 +489,8 @@ class AutomatedTrader:
         self.order = self.client.submit_order(self.order_data)
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
+        
+        # TODO: need to add code here for updating stocks.json with new amount based off individual profit/loss per stock if enabled.
 
     def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
