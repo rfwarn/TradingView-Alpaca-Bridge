@@ -303,8 +303,11 @@ class AutomatedTrader:
         elif self.options["buyPerc"] == 0 and self.options["buyAmt"] > 0:
             self.options["balance"] = self.options["buyAmt"]
 
-        if float(self.asset['amount'])!=0:
-            self.options["buyAmt"] = float(self.asset['amount'])
+        try:
+            if float(self.asset['amount'])!=0:
+                self.options["buyAmt"] = float(self.asset['amount'])
+        except TypeError:
+            pass
 
         # Multiplies the balance * buyPerc in the settings if >0 and that's what it uses to buy with.
         # Fractional shares to buy.

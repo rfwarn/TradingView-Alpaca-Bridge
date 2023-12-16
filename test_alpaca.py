@@ -388,6 +388,45 @@ class TestAlpaca(unittest.TestCase):
         result.setPosition()
         result.createOrder()
 
+    def test_stockPrefAmount(self):
+        result = AutomatedTrader(
+            paperTrading,
+            req="order buy | NVDA@154.31 | Strat buy TEST",
+            newOptions={
+                "enabled": False,
+                "limit": False,
+                "testMode": True,
+                "buyPerc": 0,
+                "buyAmt": 2000,
+                "fractional": False,
+                "perStockPreference": False,
+                "perStockAmount": True,
+                **self.fastTiming,
+            },
+            testStocklist=[{
+        "id": "4ce9353c-66d1-46c2-898f-fce867ab0247",
+        "class": "us_equity",
+        "exchange": "NASDAQ",
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation Common Stock",
+        "status": "active",
+        "tradable": True,
+        "marginable": True,
+        "maintenance_margin_requirement": 30,
+        "shortable": True,
+        "easy_to_borrow": True,
+        "fractionable": True,
+        "attributes": [],
+        "account": "",
+        "amount": 1000
+    }]
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+        self.assertEqual(result.order_data.qty, 7)
+        self.assertEqual(result.options['butAmt'], 7)
+
     # maxTimeout failsafes
     # def test_limitBuyTimeoutCancel(self):
     #     result = AutomatedTrader(
