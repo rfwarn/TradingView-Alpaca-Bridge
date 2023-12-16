@@ -297,20 +297,27 @@ class AutomatedTrader:
         elif self.options["buyPerc"] == 0 and self.options["buyAmt"] > 0:
             self.options["balance"] = self.options["buyAmt"]
 
-        if self.options["fractional"]:
-            # Fractional shares to buy.
-            amount = float(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-                if self.options["buyPerc"] > 0
-                else self.options["buyAmt"] / self.data["price"]
-            )
-        else:
+        # Fractional shares to buy.
+        amount = float(
+            self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+            if self.options["buyPerc"] > 0
+            else self.options["buyAmt"] / self.data["price"]
+        )
+        if not self.options["fractional"]:
+            # Multiplies the balance * buyPerc in the settings if >0 and that's what it uses to buy with.
             # Whole number shares to buy if fractional is not enabled. Rounds down.
-            amount = int(
-                self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-                if self.options["buyPerc"] > 0
-                else self.options["buyAmt"] / self.data["price"]
-            )
+            amount = int(amount)
+            # amount = float(
+            #     self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+            #     if self.options["buyPerc"] > 0
+            #     else self.options["buyAmt"] / self.data["price"]
+            # )
+        # else:
+            # amount = int(
+            #     self.options["balance"] * self.options["buyPerc"] / self.data["price"]
+            #     if self.options["buyPerc"] > 0
+            #     else self.options["buyAmt"] / self.data["price"]
+            # )
 
         # get position quantity
         posQty = (

@@ -83,7 +83,6 @@ options = {
     },
 }
 
-# TODO: Maybe create args for updating settings.py if it exists, to just overwrite it, and add it if it doesn't exist.
 if __name__ == "__main__":
     import os, filePath
 
@@ -95,9 +94,6 @@ if __name__ == "__main__":
             raise Exception(
                 "Extra variables found in real settings. Please remove or fix any typos and try again"
             )
-        else:
-            # print(f"Extra settings check pass for: {filePath.fileName(__file__)}")
-            pass
         return pc, paper
 
     def validateKeys(itemsA, itemsB, name):
@@ -105,7 +101,6 @@ if __name__ == "__main__":
         status = True
         for k, v in itemsA.items():
             if not k in itemsB.keys():
-                # raise Exception(f'Missing key found in settings.py {name} settings: {k}')
                 status = False
                 print(f"Missing key found in settings.py {name} settings: {k}")
             else:
