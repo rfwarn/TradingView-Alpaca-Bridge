@@ -308,6 +308,8 @@ class AutomatedTrader:
                 self.options["buyAmt"] = float(self.asset['amount'])
         except TypeError:
             pass
+        except KeyError:
+            pass
 
         # Multiplies the balance * buyPerc in the settings if >0 and that's what it uses to buy with.
         # Fractional shares to buy.
