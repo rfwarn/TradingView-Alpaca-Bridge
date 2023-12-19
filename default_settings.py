@@ -31,6 +31,7 @@ options = {
         # If testMode is enabled, it uses the % of 100000 (Ex. 0.2 = 20%, 0.02 = 2%...).
         "buyPerc": 0.2,
         # Sets a predefined amount to use for trading. Does not factor in account balance. Amount is USD. Bypassed if "testMode" is True or "buyPerc" is > 0.
+        # Also overriden if perStockAmount is true and the value in 'amount' under the stock in stocks.json is >0 for that stock.
         "buyAmt": 2000,
         # Set to 0 to automatically set balance based off other settings (cash available, margin, see other settings)
         "balance": 0,
@@ -73,6 +74,7 @@ options = {
     # Will raise an Exception if there are items in realTrading that aren't in paperTrading.
     # See descriptions above.
     "realTrading": {
+        "perStockAmount": True,
         "short": False,
         "maxPositions": 0,
         "buyPerc": 0,
