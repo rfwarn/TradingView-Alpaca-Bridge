@@ -86,7 +86,7 @@ options = {
 }
 
 if __name__ == "__main__":
-    import os, filePath
+    import os, filePath, shutil
 
     def getSettings(paper, real):
         paper = paper.copy()
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                 print(f"Missing key found in settings.py {name} settings: {k}")
             else:
                 if itemsB[k] != v:
-                    print(f"{name} setting: {itemsB[k]}, default: {v}")
+                    print(f"{name} {k} setting: {itemsB[k]}, default: {v}")
         if status:
             return True
         return False
@@ -139,4 +139,5 @@ if __name__ == "__main__":
                     print("--Real settings look good")
         except ModuleNotFoundError:
             print("No settings file found. Creating...")
-            os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
+            # os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
+            shutil.copyfile(f"{__file__}", f"{filePath.filePath() + os.sep}settings.py")
