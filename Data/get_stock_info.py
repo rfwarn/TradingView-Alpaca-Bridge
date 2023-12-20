@@ -294,8 +294,8 @@ if __name__ == "__main__":
         manualStock.setAccountPreference(newArgs, "real")
     elif args.verify:
         manualStock.verifyStockPreferences()
-    elif args.amount:
-        manualStock.printAmountPreference()
+    # elif args.amount:
+    #     manualStock.printAmountPreference()
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()
