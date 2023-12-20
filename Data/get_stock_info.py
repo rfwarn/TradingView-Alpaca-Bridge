@@ -43,8 +43,10 @@ parser.add_argument(
 )
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
+# parser.add_argument("-sm", "--set amount", help="Sets stock amount preference")
+# parser.add_argument("-m", "--amount", action="store_true", help="Gets stock amount preferences and prints them in a readable format")
 parser.add_argument(
-    "-v",
+    "-ver",
     "--verify",
     action="store_true",
     help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't",
@@ -98,6 +100,7 @@ class StockUpdater:
 
     def getStockInfo(self, asset):
         # Get individual stock information and store it in stocks.JSON in the Data directory.
+        # Allows for testing when not called.
         account = getKeys("paperTrading")
         url = "https://paper-api.alpaca.markets/v2/assets/" + asset.upper()
 
@@ -136,13 +139,21 @@ class StockUpdater:
 
     def verifyStockPreferences(self):
         # Verifies amount and account settings are present and adds them if they aren't.
+        failTest = True
         for stock in self.stocklist:
             if not "account" in stock:
                 stock["account"] = ""
                 print(f"Added blank account for: {stock['symbol']}")
+                failTest = False
             if not "amount" in stock:
                 stock["amount"] = 0
                 print(f"Added blank amount for: {stock['symbol']}")
+                failTest = False
+            elif not (isinstance(stock["amount"], float) or isinstance(stock["amount"], int)):
+                print(f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.')
+                failTest = False
+        if failTest:
+            print('Verification pass')
         self.writeStockInfo()
 
     def stockRemover(self, asset):
@@ -208,6 +219,9 @@ class StockUpdater:
             f"\n-----------",
         )
 
+    def printAmountPreference(self):
+        pass
+
     def setAccountPreference(self, newStocks, accountPref):
         # Function to print stock preference changes.
         def printPrefChange(stock, pref):
@@ -260,7 +274,6 @@ def getListOrString(arg1):
 
 if __name__ == "__main__":
     # Allows for adding, removing, and setting of stock preferences for account (paper/real)
-    # manualStock = StockUpdater(stocks)
     manualStock = StockUpdater()
     manualStock.getStockList()
     newArgs = ""
@@ -281,6 +294,8 @@ if __name__ == "__main__":
         manualStock.setAccountPreference(newArgs, "real")
     elif args.verify:
         manualStock.verifyStockPreferences()
+    elif args.amount:
+        manualStock.printAmountPreference()
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()
