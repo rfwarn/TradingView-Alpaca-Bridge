@@ -44,7 +44,7 @@ parser.add_argument(
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
 # parser.add_argument("-sm", "--set amount", help="Sets stock amount preference")
-# parser.add_argument("-m", "--amount", action="store_true", help="Gets stock amount preferences and prints them in a readable format")
+parser.add_argument("-m", "--amount", action="store_true", help="Gets stock amount preferences and prints them in a readable format")
 parser.add_argument(
     "-ver",
     "--verify",
@@ -190,7 +190,8 @@ class StockUpdater:
         else:
             print("Write not enabled")
 
-    def printAccountPreference(self):
+    def accountDetails(self, *args):
+        # pass
         if self.stocklist == []:
             empty = "Empty stocks list"
             print(empty)
@@ -201,17 +202,20 @@ class StockUpdater:
         paper = []
         neither = []
         for stock in self.stocklist:
-            allstocks.append(stock["symbol"])
+            allstocks.append([stock[x] for x in args])
             if stock["account"] == "":
-                neither.append(stock["symbol"])
+                neither.append([stock[x] for x in args])
             elif stock["account"].upper() == "real".upper():
-                real.append(stock["symbol"])
+                real.append([stock[x] for x in args])
             elif stock["account"].upper() == "paper".upper():
-                paper.append(stock["symbol"])
+                paper.append([stock[x] for x in args])
             else:
                 print(
-                    f'Problem found. Stock "{stock}" does not have account setting. Try removing and adding it again.'
+                    f'Problem found. Stock "{stock}" does not have account setting. Try removing and adding it again or run -ver.'
                 )
+        return allstocks, neither, real, paper
+    
+    def printAccountDetails(self, allstocks, neither, real, paper):
         print(
             f"-----------",
             f"\nAll stocks: {allstocks}\n--------------------------------------------------------------",
@@ -219,8 +223,22 @@ class StockUpdater:
             f"\n-----------",
         )
 
+    def printAccountPreference(self):
+        allstocks, neither, real, paper = self.accountDetails('symbol')
+        self.printAccountDetails(allstocks, neither, real, paper)
+
     def printAmountPreference(self):
-        pass
+        def removeZeroBAL(arg1):
+            # remove all == 0
+            for n in range(len(arg1)-1, -1, -1):
+                if arg1[n][1]==0:
+                    arg1.pop(n)
+        allstocks, neither, real, paper = self.accountDetails('symbol', 'amount')
+        removeZeroBAL(allstocks)
+        removeZeroBAL(neither)
+        removeZeroBAL(real)
+        removeZeroBAL(paper)
+        self.printAccountDetails(allstocks, neither, real, paper)
 
     def setAccountPreference(self, newStocks, accountPref):
         # Function to print stock preference changes.
@@ -294,8 +312,8 @@ if __name__ == "__main__":
         manualStock.setAccountPreference(newArgs, "real")
     elif args.verify:
         manualStock.verifyStockPreferences()
-    # elif args.amount:
-    #     manualStock.printAmountPreference()
+    elif args.amount:
+        manualStock.printAmountPreference()
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()
