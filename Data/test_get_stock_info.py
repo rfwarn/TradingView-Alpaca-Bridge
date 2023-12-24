@@ -93,6 +93,10 @@ def test_setStockAmount2():
     assert stockUpdater.stocklist[1]["amount"] == 800
     assert stockUpdater.stocklist[0]["amount"] == 800
 
+def test_setStockAmount3():
+    # testfor item not in stocks list.
+    stockUpdater.setStockAmount("800", 'msft')
+
 
 if __name__ == "__main__":
     test_get_stock_info()
@@ -107,3 +111,4 @@ if __name__ == "__main__":
     test_clear_stock_preference_badName()
     test_setStockAmount()
     test_setStockAmount2()
+    test_setStockAmount3()

@@ -9,7 +9,7 @@ import json
 import ast
 import argparse
 import threading
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
 # Get parent directory
 path = os.path.dirname(__file__)
@@ -68,8 +68,22 @@ class StockUpdater:
     def __init__(self, stocklist=[], write=True, testfile=''):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
+        # For testing. Not fully implemented.
+        if testfile != '':
+            self.testfile = os.path.join(path + os.sep + testfile +".json")
         # Added for testing purposes so it doesn't make changes.
         self.write = write
+        if self.write:
+            seconds = 4
+            try:
+                lock.acquire(timeout=seconds)
+            except Timeout:
+                lock.release()
+                raise Timeout(f'Time exceeded {seconds} seconds')
+
+    def __del__(self):
+        lock.release()
+        print("Destructor called")
 
     def getStockList(self):
         # Gets the list from the stocks.json file and loads them into stocklist.
@@ -191,7 +205,7 @@ class StockUpdater:
         self.sort()
         # incomplete = True
         if self.write:
-            lock.acquire()
+            # lock.acquire()
             # while incomplete:
             try:
                 with open(filename, "w+") as f:
@@ -203,7 +217,6 @@ class StockUpdater:
             print("Write not enabled")
 
     def accountDetails(self, *args):
-        # pass
         if self.stocklist == []:
             empty = "Empty stocks list"
             print(empty)
@@ -253,15 +266,18 @@ class StockUpdater:
         self.printAccountDetails(allstocks, neither, real, paper)
 
     def extractItemsInList(self, data, callback, callback2, **args):
-        def secondCallback():
-            pass
+        # function created to reduce dupicates of code from the lists and strings.
+        def callbacks(itm):
+            temp = callback(itm)
+            if not temp:
+                print(f'{itm} not in stocks.json. Add it first with the -a command')
+                return
+            callback2(temp, args)
         if isinstance(data, list):
             for item in data:
-                temp = callback(item)#, args)
-                callback2(temp, args)
+                callbacks(item)
         elif isinstance(data, str):
-            temp =  callback(data)
-            callback2(temp, args)
+            callbacks(data)
 
     def setAccountPreference(self, newStocks, accountPref):
         # Changs account preference (i.e. 'real', 'paper')
@@ -298,11 +314,9 @@ class StockUpdater:
             return "No changes made"
 
     def setStockAmount(self, amount, stock):
-        # stock = self.findStock(stock)
         def setAmount(stock, amount):
             stock['amount'] = float(amount['amount'])
-            # print(stock)
-        stock = self.extractItemsInList(stock, self.findStock, setAmount, amount = amount)
+        self.extractItemsInList(stock, self.findStock, setAmount, amount = amount)
         self.writeStockInfo()
 
 
