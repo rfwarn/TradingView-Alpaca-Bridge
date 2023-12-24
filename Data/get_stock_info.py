@@ -8,6 +8,8 @@ import os
 import json
 import ast
 import argparse
+import threading
+from filelock import FileLock
 
 # Get parent directory
 path = os.path.dirname(__file__)
@@ -18,13 +20,14 @@ from getKeys import getKeys
 
 filename = os.path.join(path + os.sep + "stocks.json")
 
-try:
-    f = open(filename, "r")
-except FileNotFoundError:
+# Check to see if the file exists and if not create it with a blank list.
+if not os.path.isfile(filename):
     f = open(filename, "x")
     f.write("[]")
-finally:
-    f.close()
+
+# file and lock to prevent potential errors
+lockfile = f"{filename}.lock"
+lock = FileLock(lockfile)
 
 # with open(filename, "r") as f:
 #     stocks = json.load(f)
@@ -43,7 +46,7 @@ parser.add_argument(
 )
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
-# parser.add_argument("-sm", "--set amount", help="Sets stock amount preference")
+parser.add_argument("-sm", "--set_amount", help="Sets stock amount preference. Ex. 1000 MSFT", nargs=2)
 parser.add_argument("-m", "--amount", action="store_true", help="Gets stock amount preferences and prints them in a readable format")
 parser.add_argument(
     "-ver",
@@ -62,7 +65,7 @@ except Exception as e:
 class StockUpdater:
     """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it will overwrite the saved list (stocks.json)."""
 
-    def __init__(self, stocklist=[], write=True):
+    def __init__(self, stocklist=[], write=True, testfile=''):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
         # Added for testing purposes so it doesn't make changes.
@@ -114,6 +117,7 @@ class StockUpdater:
         return json.loads(response.text)
 
     def findStock(self, asset):
+        # find the specific stock in stocks.json if it exists.
         for stock in self.stocklist:
             if asset.upper() == stock["symbol"]:
                 return stock
@@ -134,6 +138,7 @@ class StockUpdater:
                 break
         else:
             asset["account"] = ""
+            asset["amount"] = 0
             self.stocklist.append(asset)
         return
 
@@ -184,9 +189,16 @@ class StockUpdater:
 
     def writeStockInfo(self):
         self.sort()
+        # incomplete = True
         if self.write:
-            with open(filename, "w+") as f:
-                json.dump(self.stocklist, f, indent=4)
+            lock.acquire()
+            # while incomplete:
+            try:
+                with open(filename, "w+") as f:
+                    json.dump(self.stocklist, f, indent=4)
+                    # incomplete = False
+            finally:
+                lock.release()
         else:
             print("Write not enabled")
 
@@ -240,32 +252,42 @@ class StockUpdater:
         removeZeroBAL(paper)
         self.printAccountDetails(allstocks, neither, real, paper)
 
+    def extractItemsInList(self, data, callback, callback2, **args):
+        def secondCallback():
+            pass
+        if isinstance(data, list):
+            for item in data:
+                temp = callback(item)#, args)
+                callback2(temp, args)
+        elif isinstance(data, str):
+            temp =  callback(data)
+            callback2(temp, args)
+
     def setAccountPreference(self, newStocks, accountPref):
-        # Function to print stock preference changes.
+        # Changs account preference (i.e. 'real', 'paper')
         def printPrefChange(stock, pref):
+            # Function to print stock preference changes.
             print(f"Stock preference for: {stock}, set to {pref if pref else 'clear'}")
+
+        def stockUpdatePref(stock, pref):
+            # Stock updating function
+            stockPref = self.findStock(stock)
+            if stockPref:
+                stockPref["account"] = pref
+                printPrefChange(stock, pref)
+                changed = True
+            else:
+                print(f"Stock not found for: {stock}")
+                # self.stockSplitter(stock)
+                return
 
         # Set or clear stock account preferences.
         changed = False
         if isinstance(newStocks, list):
             for stock in newStocks:
-                stockPref = self.findStock(stock)
-                if stockPref:
-                    stockPref["account"] = accountPref
-                    printPrefChange(stock, accountPref)
-                    changed = True
-                else:
-                    print(f"Stock not found for: {stock}")
-                    self.stockSplitter(stock)
+                stockUpdatePref(stock, accountPref)
         elif isinstance(newStocks, str):
-            stockPref = self.findStock(newStocks)
-            if stockPref:
-                stockPref["account"] = accountPref
-                printPrefChange(newStocks, accountPref)
-                changed = True
-            else:
-                print(f"Stock not found for: {newStocks}")
-                return
+            stockUpdatePref(newStocks, accountPref)
         else:
             raise Exception(
                 f"setAccountPreference received wrong type {type(newStocks)}"
@@ -274,6 +296,14 @@ class StockUpdater:
             self.writeStockInfo()
         else:
             return "No changes made"
+
+    def setStockAmount(self, amount, stock):
+        # stock = self.findStock(stock)
+        def setAmount(stock, amount):
+            stock['amount'] = float(amount['amount'])
+            # print(stock)
+        stock = self.extractItemsInList(stock, self.findStock, setAmount, amount = amount)
+        self.writeStockInfo()
 
 
 def getListOrString(arg1):
@@ -285,6 +315,9 @@ def getListOrString(arg1):
         if "," in arg1:
             inputList = arg1.split(",")
             inputList = [stock.strip().upper() for stock in inputList]
+        elif isinstance(arg1, list):
+            inputList = arg1
+            return inputList
         else:
             inputList = arg1.strip().upper()
     return inputList
@@ -314,6 +347,9 @@ if __name__ == "__main__":
         manualStock.verifyStockPreferences()
     elif args.amount:
         manualStock.printAmountPreference()
+    elif args.set_amount:
+        newArgs = getListOrString(args.set_amount[1:])
+        manualStock.setStockAmount(args.set_amount[0], newArgs)
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()

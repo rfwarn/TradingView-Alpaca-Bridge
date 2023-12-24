@@ -496,6 +496,7 @@ class AutomatedTrader:
             self.verifyOrder(self.order)
         
         # TODO: need to add code here for updating stocks.json with new amount based off individual profit/loss per stock if enabled.
+        # Lookup orders and update amount
 
     def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).

@@ -82,6 +82,17 @@ def test_clear_stock_preference_badName():
     newArgs = getListOrString("tsla")
     stockUpdater.setAccountPreference(newArgs, "")
 
+def test_setStockAmount():
+    stockUpdater.setStockAmount("500", 'fcel')
+    assert stockUpdater.stocklist[0]["symbol"] == "FCEL"
+    assert stockUpdater.stocklist[0]["amount"] == 500
+
+def test_setStockAmount2():
+    stockUpdater.setStockAmount("800", ['goog', "fcel"])
+    assert stockUpdater.stocklist[1]["symbol"] == "GOOG"
+    assert stockUpdater.stocklist[1]["amount"] == 800
+    assert stockUpdater.stocklist[0]["amount"] == 800
+
 
 if __name__ == "__main__":
     test_get_stock_info()
@@ -94,3 +105,5 @@ if __name__ == "__main__":
     test_set_real_stock_preference()
     test_clear_stock_preference()
     test_clear_stock_preference_badName()
+    test_setStockAmount()
+    test_setStockAmount2()
