@@ -9,7 +9,7 @@ options = {
         #   argument of an individual ('JPM') or list (['JPM','ORCL']) will add the stock to stocks.json then edit the file
         #   and change the default value of '' to the preferred account. This allows individual stock control when the performance
         #   of the paper account is adaquate to test with the real account. Accounts respect the individualized settings in the settings file.
-        "perStockPreference": True,
+        "perStockPreference": False,
         # Not implemented yet...
         # Allow for individual stock amount ($USD) preference per stock. Setting to False will disable this option.
         #   This will also track the amount you have gained of lost with the particular stock after a trady allowing
@@ -74,6 +74,7 @@ options = {
     # Will raise an Exception if there are items in realTrading that aren't in paperTrading.
     # See descriptions above.
     "realTrading": {
+        "perStockPreference": True,
         "perStockAmount": True,
         "short": False,
         "maxPositions": 0,
