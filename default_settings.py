@@ -20,7 +20,7 @@ options = {
         # Allows for compounding of individual stocks. perStockAmount must be true and value for symbol in 
         # stocks.json must have an amount >0. Can use "python get_stock_info.py -m" in the DAta directory 
         # to get stock preferences and "python get_stock_info.py -sm 1000 QQQ" for example to set am amount.
-        # Not implemented yet.
+        # Verify orders also has to be True for this to work. Not implemented yet.
         "perStockAmountCompounding": False,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
