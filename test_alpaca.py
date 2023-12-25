@@ -36,7 +36,7 @@ marketLDC = {
 class TestAlpaca(unittest.TestCase):
     # realClient = AutomatedTrader(realTrading, newOptions={})
     paperClient = AutomatedTrader(
-        paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
+        paperTrading, req=marketLDC["Long"], newOptions={"enabled": False, "perStockPreference": False}
     )
 
     fastTiming = {"maxTime": 3, "totalMaxTime": 4}
@@ -77,14 +77,14 @@ class TestAlpaca(unittest.TestCase):
         # Test failsafe that prevents trading if testMode is enabled when using real money. testMode uses a default cash amount which can cause real problems if not using a paper account.
         with self.assertRaises(Exception):
             AutomatedTrader(
-                realTrading, req="", newOptions={"enabled": True, "testMode": True}
+                realTrading, req="", newOptions={"enabled": True, "testMode": True, "perStockPreference": False}
             )
 
     def test_fractionalLimit(self):
         # Test failsafe that prevents trying to place an order as a limit with fractional enabled which Alpaca does not support.
         with self.assertRaises(Exception):
             AutomatedTrader(
-                realTrading, req="", newOptions={"fractional": True, "limit": True}
+                realTrading, req="", newOptions={"fractional": True, "limit": True, "perStockPreference": False}
             )
 
     def test_validateRealKeys(self):
@@ -100,7 +100,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             paperTrading,
             req="order sell | MSFT@337.57 | TEST",
-            newOptions={"enabled": False},
+            newOptions={"enabled": False, "perStockPreference": False},
         )
         result.setData()
         self.assertEqual(result.data["action"], "sell")
@@ -112,7 +112,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             paperTrading,
             req="order buy | MSFT@337.57 | TEST",
-            newOptions={"enabled": False},
+            newOptions={"enabled": False, "perStockPreference": False},
         )
         result.setData()
         self.assertEqual(result.data["action"], "buy")
@@ -122,7 +122,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data3(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Bear"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Bear"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bear")
@@ -132,7 +132,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data4(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Bull"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Bull"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Bull")
@@ -142,7 +142,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data5(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Open"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Open"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -153,7 +153,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data6(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Long"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Long"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
@@ -164,7 +164,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data7(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Short"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Short"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Open")
@@ -175,7 +175,7 @@ class TestAlpaca(unittest.TestCase):
 
     def test_data8(self):
         result = AutomatedTrader(
-            paperTrading, req=marketLDC["Close"], newOptions={"enabled": False}
+            paperTrading, req=marketLDC["Close"], newOptions={"enabled": False, "perStockPreference": False}
         )
         result.setData()
         self.assertEqual(result.data["action"], "Close")
@@ -193,7 +193,7 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             paperTrading,
             req=marketLDC["Close"],
-            newOptions={"enabled": False, "testMode": True},
+            newOptions={"enabled": False, "testMode": True, "perStockPreference": False},
         )
         result.setBalance()
 
@@ -201,7 +201,11 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             paperTrading,
             req=marketLDC["OpenFCEL"],
-            newOptions={"enabled": False, "limit": True, "fractional": False},
+            newOptions={"enabled": False, "limit": True, "fractional": False, 
+                "testMode": True,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,},
         )
         limitPrice = 23.3 + options["paperTrading"]["limitAmt"]
         result.setData()
@@ -215,7 +219,11 @@ class TestAlpaca(unittest.TestCase):
         result = AutomatedTrader(
             paperTrading,
             req=marketLDC["OpenFCEL"],
-            newOptions={"enabled": False, "limit": False, "fractional": False},
+            newOptions={"enabled": False, "limit": False, "fractional": False,
+                "testMode": True,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,},
         )
         result.setData()
         result.setPosition()
@@ -234,7 +242,8 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": True,
                 "limit": False,
                 "buyTimeout": "Cancel",
-                "fractional": True,
+                "fractional": True, 
+                "perStockPreference": False,
                 **self.fastTiming,
             },
         )
@@ -251,6 +260,7 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": True,
                 "limit": False,
                 "buyTimeout": "Market",
+                "perStockPreference": False,
                 "fractional": False,
                 **self.fastTiming,
             },
@@ -266,7 +276,8 @@ class TestAlpaca(unittest.TestCase):
             # req="order buy | CLSK@5.965 | Strat buy TEST",
             newOptions={
                 "enabled": True,
-                "limit": True,
+                "limit": True, 
+                "perStockPreference": False,
                 "buyTimeout": "Market",
                 **self.fastTiming,
             },
@@ -283,7 +294,8 @@ class TestAlpaca(unittest.TestCase):
             newOptions={
                 "enabled": True,
                 "limit": True,
-                "buyTimeout": "Market",
+                "buyTimeout": "Market", 
+                "perStockPreference": False,
                 "fractional": False,
                 **self.fastTiming,
             },
@@ -297,7 +309,7 @@ class TestAlpaca(unittest.TestCase):
             result = AutomatedTrader(
                 paperTrading,
                 req="123 TEST",
-                newOptions={"enabled": True, "limit": False},
+                newOptions={"enabled": True, "limit": False, "perStockPreference": False},
             )
             result.setData()
 
@@ -308,9 +320,11 @@ class TestAlpaca(unittest.TestCase):
             newOptions={
                 "enabled": False,
                 "buyPerc": 0,
+                "buyAmt": 2000,
                 "testMode": False,
                 "limit": False,
-                "fractional": True,
+                "fractional": True, 
+                "perStockPreference": False,
                 **self.fastTiming,
             },
         )
@@ -327,7 +341,11 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": False,
                 "limit": False,
                 "fractional": False,
+                "testMode": True,
                 "maxPositions": 0,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,
                 "allPositions": self.debugPositions,
                 **self.fastTiming,
             },
@@ -344,7 +362,11 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": False,
                 "limit": False,
                 "fractional": False,
+                "testMode": True,
                 "maxPositions": 2,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,
                 "allPositions": self.debugPositions,
                 **self.fastTiming,
             },
@@ -361,7 +383,11 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": False,
                 "limit": False,
                 "fractional": False,
+                "testMode": True,
                 "maxPositions": 1,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,
                 "allPositions": self.debugPositions,
                 **self.fastTiming,
             },
@@ -379,7 +405,11 @@ class TestAlpaca(unittest.TestCase):
                 "enabled": False,
                 "limit": False,
                 "fractional": False,
+                "testMode": True,
                 "maxPositions": 1,
+                "perStockPreference": False,
+                "perStockAmount": False,
+                "perStockAmountCompounding": False,
                 "allPositions": self.debugPositions,
                 **self.fastTiming,
             },

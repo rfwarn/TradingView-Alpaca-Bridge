@@ -68,7 +68,8 @@ class StockUpdater:
     def __init__(self, stocklist=[], write=True, testfile=''):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
-        self.debug = True
+        # self.debug = True
+        self.debug = False
         # For testing. Not implemented yet.
         if testfile != '':
             self.testfile = os.path.join(path + os.sep + testfile +".json")
@@ -78,7 +79,7 @@ class StockUpdater:
     def __del__(self):
         lock.release()
         if self.debug:
-            print("Destructor called, file released")
+            print("Destructor called, file released if lock acquired was successful.")
 
     def lockFile(self):
         if self.write:
@@ -88,8 +89,13 @@ class StockUpdater:
                 if self.debug:
                     print('file locked')
             except Timeout:
-                lock.release()
-                raise Timeout(f'Time exceeded {seconds} seconds')
+                # lock.release()
+                raise Timeout(f'Time exceeded {seconds} seconds. Another process may be locking the file.')
+            
+    def releaseFile(self):
+        lock.release()
+        if self.debug:
+            print("release called, file released if lock acquired was successful.")
 
     def getStockList(self):
         # Gets the list from the stocks.json file and loads them into stocklist.
@@ -224,6 +230,7 @@ class StockUpdater:
                     print('finished writing')
         else:
             print("Write not enabled")
+        self.releaseFile()
 
     def accountDetails(self, *args):
         if self.stocklist == []:
@@ -296,6 +303,7 @@ class StockUpdater:
 
         def stockUpdatePref(stock, pref):
             # Stock updating function
+            nonlocal changed
             stockPref = self.findStock(stock)
             if stockPref:
                 stockPref["account"] = pref

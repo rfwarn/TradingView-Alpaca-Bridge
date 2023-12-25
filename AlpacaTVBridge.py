@@ -49,7 +49,8 @@ accountPaper = getKeys("paperTrading")
 # stocks = stockUpdater.getStockList()
 
 # Clear lock file if it exists. This is for edge cases if the program is stopped before the lock is 
-# released and the file isn't deleted before running it again preventing future locking.
+# released (primarily when debugging) and the file isn't deleted before running it again preventing 
+# future access.
 try:
     path = os.path.dirname(__file__)
     lockfile = os.path.join(path + os.sep + "Data" + os.sep + "stocks.json.lock")
@@ -145,8 +146,10 @@ class AutomatedTrader:
         global accountReal
         global accountPaper
         global stocks
+        self.newOrders = {}
         self.stockUpdater = StockUpdater()
-        self.debug = True
+        # self.debug = True
+        self.debug = False
         self.testStocklist = testStocklist
         self.testAccount = testAccount
         self.asset = None
@@ -192,15 +195,18 @@ class AutomatedTrader:
     def createClientAndSettings(self):
         # Creates the trading client based on real or paper account for testing purposes.
         if self.testAccount != None:
+            # For testing purposes
             self.options.update(settingsPaper) if self.testAccount[
                 "paper"
             ] else self.options.update(settingsReal)
             return TradingClient(**self.testAccount)
         elif not settings["perStockPreference"]:
+            # Use account in settings if "perStockPreference" is False
             self.options.update(settings)
             return TradingClient(**account)
 
         try:
+            # Checks stocks.json to see if there is a preference if "perStockPreference" is True.
             if self.asset["account"] == "":
                 self.options.update(settings)
                 return TradingClient(**account)
@@ -217,6 +223,7 @@ class AutomatedTrader:
                 self.options.update(settings)
                 return TradingClient(**account)
         except TypeError:
+            # Use account in settings if stock not found in stocks.json
             self.options.update(settings)
             return TradingClient(**account)
 
@@ -225,13 +232,14 @@ class AutomatedTrader:
         # Classification or custom alerts (noted in documentation how to setup).
         if self.req[:3] == "LDC":
             extractedData = re.search(
-                # regex
+                # regex with ignorecase
                 r"(bear|bull|open|close).+?(long|short)?.+[|] (.+)[@]\[*([0-9.]+)\]* [|]",
                 self.req,
                 flags=re.IGNORECASE,
             )
         else:
             extractedData = re.search(
+                # regex with ignorecase
                 r"order (buy|sell) [|] (.+)[@]\[*([0-9.]+)\]* [|]",
                 self.req,
                 flags=re.IGNORECASE,
@@ -322,9 +330,11 @@ class AutomatedTrader:
         elif self.options["buyPerc"] == 0 and self.options["buyAmt"] > 0:
             self.options["balance"] = self.options["buyAmt"]
 
+        perStock = False
         try:
-            if float(self.asset['amount'])!=0:
+            if float(self.asset['amount'])>0 and self.options['perStockAmount']:
                 self.options["buyAmt"] = float(self.asset['amount'])
+                perStock = True
         except TypeError:
             pass
         except KeyError:
@@ -334,7 +344,7 @@ class AutomatedTrader:
         # Fractional shares to buy.
         amount = float(
             self.options["balance"] * self.options["buyPerc"] / self.data["price"]
-            if self.options["buyPerc"] > 0
+            if self.options["buyPerc"] > 0 and not perStock
             else self.options["buyAmt"] / self.data["price"]
         )
         if not self.options["fractional"]:
@@ -511,14 +521,26 @@ class AutomatedTrader:
             return
         # Submit order
         self.order = self.client.submit_order(self.order_data)
+        if self.options['perStockAmountCompounding'] and self.asset:
+            self.newOrders = {"symbol": self.order.symbol,"clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": 0}
+        # Verify order if enabled in settings.
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
         
         # TODO: need to add code here for updating stocks.json with new amount based off individual profit/loss per stock if enabled.
         # Lookup orders and update amount
+        if bool(self.newOrders):
+            self.updateStockAmount()
 
     def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
+        def amountUpdate():
+            # order= self.client.get_order_by_client_id(id)
+            if order:
+                if order.filled_avg_price:
+                    self.newOrders['amount'] += float(order.filled_qty) * float(order.filled_avg_price)
+            else:
+                logger.warning('order == None')
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
         totalMaxTime = self.options["totalMaxTime"]
@@ -555,7 +577,8 @@ class AutomatedTrader:
                     else:
                         # competed at this point and returns True to indicate cancel was successful
                         return True
-                # Changes order to market after initial maxtime. Determined in settings
+                # Changes order to market after initial maxtime by cancelling previous order and creating a new one. 
+                # Determined in settings.
                 elif (self.options["buyTimeout"] == "Market" and orderSideBuy) or (
                     self.options["sellTimeout"] == "Market" and orderSideSell
                 ):
@@ -566,10 +589,12 @@ class AutomatedTrader:
                     timeout = True
                     # verify canceled order
                     if self.verifyOrder(order, True):
-                        # Once order is canceled, find how many didn't get filled for new market order
-                        amount = float(order.qty) - float(order.filled_qty)
-                        # Set the new order. This will also set the new self.order_data based on the prior order info, the updated amount left to buy/sell, and False for limit to make it a market order.
-                        self.orderType(amount, order.side, False)
+                        # Once order is canceled, find how many didn't get filled for new market order and append 
+                        # filled qty to tracker.
+                        amountRemaining = float(order.qty) - float(order.filled_qty)
+                        # Set the new order. This will also set the new self.order_data based on the prior order info, 
+                        # the updated amount left to buy/sell, and False for limit to make it a market order.
+                        self.orderType(amountRemaining, order.side, False)
                         # Submit the order and udpate the local variable.
                         order = self.client.submit_order(self.order_data)
                         logger.debug(
@@ -599,8 +624,8 @@ class AutomatedTrader:
                     logger.error(err)
                     raise Exception(err)
             elif time.time() - now > totalMaxTime:
-                self.cancelOrderById(order.id.hex)
                 # failsafe to exit loop
+                self.cancelOrderById(order.id.hex)
                 logger.warning(
                     f'Cancelling, order exeeded totalMaxTime ({totalMaxTime} seconds) for: action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
                 )
@@ -622,16 +647,19 @@ class AutomatedTrader:
             order = self.client.get_order_by_client_id(id)
 
         if order.canceled_at is not None:
-            logger.debug(
+            amountUpdate()
+            logger.info(
                 f'Order canceled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return True
         elif order.failed_at is not None:
+            amountUpdate()
             logger.warning(
                 f'Order failed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return False
         elif order.filled_at is not None:
+            amountUpdate()
             logger.info(
                 f'Order filled for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
@@ -640,8 +668,12 @@ class AutomatedTrader:
     def updateStockAmount(self):
         # Updates stocks.json data with new stock amount after selling.
         # TODO: Might need to look at retriving the order(s) after to make sure the data is accurate.
-        self.asset["amount"] = self.data["price"] * self.order_data.qty
-        # self.stockUpdater
+        try:
+            if self.newOrders['amount'] >0:
+                self.asset["amount"] = self.newOrders['amount']
+                self.stockUpdater.writeStockInfo()
+        except NameError:
+            pass
 
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:

@@ -9,19 +9,18 @@ options = {
         #   argument of an individual ('JPM') or list (['JPM','ORCL']) will add the stock to stocks.json then edit the file
         #   and change the default value of '' to the preferred account. This allows individual stock control when the performance
         #   of the paper account is adaquate to test with the real account. Accounts respect the individualized settings in the settings file.
-        "perStockPreference": False,
-        # Not implemented yet...
-        # Allow for individual stock amount ($USD) preference per stock. Setting to False will disable this option.
+        "perStockPreference": True,
+        # Allow for individual stock amount preference per stock. Setting to False will disable this option.
         #   This will also track the amount you have gained of lost with the particular stock after a trady allowing
         #   for compounding gains/losses on individual stocks.
         # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to
         #   2200 which is how much it would spend buying the stock next time.
-        "perStockAmount": False,
-        # Allows for compounding of individual stocks. perStockAmount must be true and value for symbol in 
-        # stocks.json must have an amount >0. Can use "python get_stock_info.py -m" in the DAta directory 
+        "perStockAmount": True,
+        # Allows for compounding of individual stocks. perStockAmount must be True and value for symbol in 
+        # stocks.json must be present and have an amount >0. Can use "python get_stock_info.py -m" in the Data directory 
         # to get stock preferences and "python get_stock_info.py -sm 1000 QQQ" for example to set am amount.
         # Verify orders also has to be True for this to work. Not implemented yet.
-        "perStockAmountCompounding": False,
+        "perStockAmountCompounding": True,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
