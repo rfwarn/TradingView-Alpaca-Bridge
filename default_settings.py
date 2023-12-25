@@ -17,6 +17,11 @@ options = {
         # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to
         #   2200 which is how much it would spend buying the stock next time.
         "perStockAmount": False,
+        # Allows for compounding of individual stocks. perStockAmount must be true and value for symbol in 
+        # stocks.json must have an amount >0. Can use "python get_stock_info.py -m" in the DAta directory 
+        # to get stock preferences and "python get_stock_info.py -sm 1000 QQQ" for example to set am amount.
+        # Not implemented yet.
+        "perStockAmountCompounding": False,
         # Enable/disable shorting. Not fully implemented yet.
         # ***Alert(s) needs to say 'short' and you have to close any long positions first.
         "short": False,
@@ -76,6 +81,7 @@ options = {
     "realTrading": {
         "perStockPreference": True,
         "perStockAmount": True,
+        "perStockAmountCompounding": False,
         "short": False,
         "maxPositions": 0,
         "buyPerc": 0,
@@ -140,5 +146,4 @@ if __name__ == "__main__":
                     print("--Real settings look good")
         except ModuleNotFoundError:
             print("No settings file found. Creating...")
-            # os.popen(f"copy {__file__} {filePath.filePath() + os.sep}settings.py")
             shutil.copyfile(f"{__file__}", f"{filePath.filePath() + os.sep}settings.py")

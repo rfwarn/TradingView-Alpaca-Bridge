@@ -271,7 +271,8 @@ class AutomatedTrader:
                 #     self.options["buyAmt"] = float(item["amount"])
                 return item
                 # break
-        del StockUpdater
+        # TODO: Deleting causes issues with deconstructor. Maybe add stock after verification.
+        # del self.stockUpdater
 
     def setPosition(self):
         # get stock positions
