@@ -506,7 +506,7 @@ class AutomatedTrader:
                 err = f'Over max positions: max positions - {self.options["maxPositions"]}, current positions - {[x.symbol for x in self.options["allPositions"]]}'
                 logger.warning(err)
                 raise Exception(err)
-                return False
+                # return False
             elif len(self.options["allPositions"]) == self.options["maxPositions"]:
                 logger.info(
                     f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}'
@@ -669,9 +669,12 @@ class AutomatedTrader:
         # Updates stocks.json data with new stock amount after selling.
         # TODO: Might need to look at retriving the order(s) after to make sure the data is accurate.
         try:
-            if self.newOrders['amount'] >0:
+            if self.newOrders['amount'] > 0:
                 self.asset["amount"] = self.newOrders['amount']
-                self.stockUpdater.writeStockInfo()
+                if not self.testAccount:
+                    self.stockUpdater.writeStockInfo()
+                else:
+                    self.stockUpdater.releaseFile()
         except NameError:
             pass
 

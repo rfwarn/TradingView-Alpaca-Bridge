@@ -457,6 +457,47 @@ class TestAlpaca(unittest.TestCase):
         self.assertEqual(result.order_data.qty, 2)
         self.assertEqual(result.options['buyAmt'], 1000)
 
+    def test_stockPrefAmountCompound(self):
+        result = AutomatedTrader(
+            paperTrading,
+            req="order buy | MSFT@368.31 | Strat buy TEST",
+            newOptions={
+                "enabled": False,
+                "limit": False,
+                "testMode": False,
+                "buyPerc": 0,
+                "buyAmt": 2000,
+                "fractional": False,
+                "perStockPreference": False,
+                "perStockAmount": True,
+                **self.fastTiming,
+            },
+            testStocklist=[{
+        "id": "b6d1aa75-5c9c-4353-a305-9e2caa1925ab",
+        "class": "us_equity",
+        "exchange": "NASDAQ",
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation Common Stock",
+        "status": "active",
+        "tradable": True,
+        "marginable": True,
+        "maintenance_margin_requirement": 30,
+        "shortable": True,
+        "easy_to_borrow": True,
+        "fractionable": True,
+        "attributes": [],
+        "account": "",
+        "amount": 1000
+    }]
+        )
+        result.setData()
+        result.setPosition()
+        result.createOrder()
+        result.newOrders['amount'] = 1200
+        result.updateStockAmount()
+        self.assertEqual(result.order_data.qty, 2)
+        self.assertEqual(result.asset["amount"], 1200)
+
     # maxTimeout failsafes
     # def test_limitBuyTimeoutCancel(self):
     #     result = AutomatedTrader(
