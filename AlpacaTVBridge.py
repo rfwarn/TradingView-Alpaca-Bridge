@@ -40,13 +40,13 @@ accountReal = getKeys("realTrading")
 accountPaper = getKeys("paperTrading")
 
 # Load stocks initially
-path = os.path.dirname(__file__)
-with open(path + os.sep + "Data/stocks.json", "r") as f:
-    stocks = json.load(f)
+# path = os.path.dirname(__file__)
+# with open(path + os.sep + "Data/stocks.json", "r") as f:
+#     stocks = json.load(f)
 
 # Load stock program
-stockUpdater = StockUpdater()
-stockUpdater.getStockList()
+# stockUpdater = StockUpdater()
+# stocks = stockUpdater.getStockList()
 
 
 # Load settings
@@ -136,6 +136,8 @@ class AutomatedTrader:
         global accountReal
         global accountPaper
         global stocks
+        self.stockUpdater = StockUpdater()
+        self.debug = True
         self.testStocklist = testStocklist
         self.testAccount = testAccount
         self.asset = None
@@ -172,6 +174,11 @@ class AutomatedTrader:
             self.setAllPositions()
             self.setBalance()
             self.createOrder()
+
+    def __del__(self):
+        del self.stockUpdater
+        if self.debug:
+            print('Object deconstructor ran')
 
     def createClientAndSettings(self):
         # Creates the trading client based on real or paper account for testing purposes.
@@ -254,7 +261,8 @@ class AutomatedTrader:
         if self.testStocklist:
             newStocks = self.testStocklist
         else:
-            newStocks = stocks
+            # newStocks = stocks
+            newStocks = self.stockUpdater.getStockList()
         for item in newStocks:
             if item["symbol"] == self.data["stock"]:
                 self.asset = item
@@ -263,6 +271,7 @@ class AutomatedTrader:
                 #     self.options["buyAmt"] = float(item["amount"])
                 return item
                 # break
+        del StockUpdater
 
     def setPosition(self):
         # get stock positions
@@ -620,9 +629,9 @@ class AutomatedTrader:
 
     def updateStockAmount(self):
         # Updates stocks.json data with new stock amount after selling.
-        # TODO: Might need to look at retriving the order after to make sure the data is accurate.
+        # TODO: Might need to look at retriving the order(s) after to make sure the data is accurate.
         self.asset["amount"] = self.data["price"] * self.order_data.qty
-        stockUpdater
+        # self.stockUpdater
 
     def cancelOrderById(self, id=None):
         if not self.options["enabled"]:

@@ -68,25 +68,32 @@ class StockUpdater:
     def __init__(self, stocklist=[], write=True, testfile=''):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
-        # For testing. Not fully implemented.
+        self.debug = True
+        # For testing. Not implemented yet.
         if testfile != '':
             self.testfile = os.path.join(path + os.sep + testfile +".json")
         # Added for testing purposes so it doesn't make changes.
         self.write = write
+
+    def __del__(self):
+        lock.release()
+        if self.debug:
+            print("Destructor called, file released")
+
+    def lockFile(self):
         if self.write:
             seconds = 4
             try:
                 lock.acquire(timeout=seconds)
+                if self.debug:
+                    print('file locked')
             except Timeout:
                 lock.release()
                 raise Timeout(f'Time exceeded {seconds} seconds')
 
-    def __del__(self):
-        lock.release()
-        print("Destructor called")
-
     def getStockList(self):
         # Gets the list from the stocks.json file and loads them into stocklist.
+        self.lockFile()
         with open(filename, "r") as f:
             stocks = json.load(f)
         self.stocklist = stocks
@@ -203,16 +210,18 @@ class StockUpdater:
 
     def writeStockInfo(self):
         self.sort()
-        # incomplete = True
         if self.write:
-            # lock.acquire()
-            # while incomplete:
             try:
+                # with lock.acquire(timeout=2):
                 with open(filename, "w+") as f:
                     json.dump(self.stocklist, f, indent=4)
-                    # incomplete = False
+            # except Timeout:
+            #     lock.release()
+            #     raise Timeout(f'Time exceeded {seconds} seconds')
             finally:
-                lock.release()
+                # lock.release()
+                if self.debug:
+                    print('finished writing')
         else:
             print("Write not enabled")
 
