@@ -521,6 +521,7 @@ class AutomatedTrader:
             return
         # Submit order
         self.order = self.client.submit_order(self.order_data)
+        # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders.
         if self.options['perStockAmountCompounding'] and self.asset:
             self.newOrders = {"symbol": self.order.symbol,"clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": self.asset['amount']}
         # Verify order if enabled in settings.
@@ -538,7 +539,7 @@ class AutomatedTrader:
         orderSideSell = str(order.side) == "OrderSide.SELL"
         def amountUpdate():
             # order= self.client.get_order_by_client_id(id)
-            if order:
+            if order and self.newOrders['amount'] > 0:
                 if order.filled_avg_price and orderSideBuy:
                     self.newOrders['amount'] -= float(order.filled_qty) * float(order.filled_avg_price)
                     if self.newOrders['amount'] <0:
@@ -546,6 +547,8 @@ class AutomatedTrader:
                         self.newOrders['amount'] = 0.01
                 elif order.filled_avg_price and orderSideSell:
                     self.newOrders['amount'] += float(order.filled_qty) * float(order.filled_avg_price)
+            elif order and self.newOrders['amount'] == 0:
+                pass
             else:
                 logger.warning('order == None')
         # TODO: Need to add async stream method for checking for order completion.
