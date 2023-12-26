@@ -522,7 +522,7 @@ class AutomatedTrader:
         # Submit order
         self.order = self.client.submit_order(self.order_data)
         if self.options['perStockAmountCompounding'] and self.asset:
-            self.newOrders = {"symbol": self.order.symbol,"clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": 0}
+            self.newOrders = {"symbol": self.order.symbol,"clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": self.asset['amount']}
         # Verify order if enabled in settings.
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
@@ -534,18 +534,23 @@ class AutomatedTrader:
 
     def verifyOrder(self, order=None, timeout=False):
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
+        orderSideBuy = str(order.side) == "OrderSide.BUY"
+        orderSideSell = str(order.side) == "OrderSide.SELL"
         def amountUpdate():
             # order= self.client.get_order_by_client_id(id)
             if order:
-                if order.filled_avg_price:
+                if order.filled_avg_price and orderSideBuy:
+                    self.newOrders['amount'] -= float(order.filled_qty) * float(order.filled_avg_price)
+                    if self.newOrders['amount'] <0:
+                        logger.warning(f'Price differential causing overspending for: {self.order.symbol}')
+                        self.newOrders['amount'] = 0.01
+                elif order.filled_avg_price and orderSideSell:
                     self.newOrders['amount'] += float(order.filled_qty) * float(order.filled_avg_price)
             else:
                 logger.warning('order == None')
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
         totalMaxTime = self.options["totalMaxTime"]
-        orderSideBuy = str(order.side) == "OrderSide.BUY"
-        orderSideSell = str(order.side) == "OrderSide.SELL"
         now = time.time()
         id = order.client_order_id
         # While loop that checks the order status every 1 second.
