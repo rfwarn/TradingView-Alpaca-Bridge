@@ -1,0 +1,1 @@
+# Will be primarily used to test using paper account during normal hours. Using for validation that won't work outside trading hours.
