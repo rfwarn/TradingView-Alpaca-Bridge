@@ -80,7 +80,7 @@ options = {
     "realTrading": {
         "perStockPreference": True,
         "perStockAmount": True,
-        "perStockAmountCompounding": False,
+        "perStockAmountCompounding": True,
         "short": False,
         "maxPositions": 0,
         "buyPerc": 0,
