@@ -521,9 +521,9 @@ class AutomatedTrader:
             return
         # Submit order
         self.order = self.client.submit_order(self.order_data)
-        # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders.
+        # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders. self.asset will be None if it isn't found in the stocklist so it won't cause an error.
         if self.options['perStockAmountCompounding'] and self.options['perStockAmount'] and self.asset:
-            self.newOrders = {"symbol": self.order.symbol,"clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": self.asset['amount']}
+            self.newOrders = {"symbol": self.order.symbol, "clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": self.asset['amount']}
         # Verify order if enabled in settings.
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
@@ -542,8 +542,10 @@ class AutomatedTrader:
                 if order and self.newOrders['amount'] > 0:
                     if order.filled_avg_price and orderSideBuy:
                         self.newOrders['amount'] -= float(order.filled_qty) * float(order.filled_avg_price)
-                        if self.newOrders['amount'] <0:
+                        if self.newOrders['amount'] <= 0:
                             logger.warning(f'Price differential causing overspending for: {self.order.symbol}')
+                            self.newOrders['amount'] = 0.01
+                        if self.newOrders['amount'] == 0:
                             self.newOrders['amount'] = 0.01
                     elif order.filled_avg_price and orderSideSell:
                         self.newOrders['amount'] += float(order.filled_qty) * float(order.filled_avg_price)
