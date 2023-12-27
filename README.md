@@ -2,7 +2,7 @@
 
 This project is a python program that connects TradingView alerts with Alpaca API to execute buy and sell orders for stocks. It allows you to test and analyze your trading strategies in a fully automated way, using real or paper accounts. You can use any indicators or strategies from TradingView, or create your own, and let this program handle the order management for you.
 
-**Features (check out default_settings to read more about them):**
+**Features (check out default_settings to learn more about them and any other feature that might not be listed):**
 
 - Overall and individual stock account preferences (real, paper). This enables individual stock performance validation before using real money.
 - Allows for percentage buying of total cash available to allow for compounding growth.
