@@ -161,11 +161,14 @@ class StockUpdater:
                     self.stocklist[n]["account"] = ""
                 if not "amount" in stock:
                     self.stocklist[n]["amount"] = 0
+                # if not "override" in stock:
+                #     self.stocklist[n]["override"] = False
                 self.stocklist[n].update(asset)
                 break
         else:
             asset["account"] = ""
             asset["amount"] = 0
+            # asset["override"] = False
             self.stocklist.append(asset)
         return
 
@@ -184,6 +187,10 @@ class StockUpdater:
             elif not (isinstance(stock["amount"], float) or isinstance(stock["amount"], int)):
                 print(f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.')
                 failTest = False
+            # if not "override" in stock:
+            #     stock["override"] = False
+            #     print(f"Added blank override for: {stock['symbol']}")
+            #     failTest = False
         if failTest:
             print('Verification pass')
         self.writeStockInfo()
@@ -313,7 +320,6 @@ class StockUpdater:
                 print(f"Stock not found for: {stock}")
                 # self.stockSplitter(stock)
                 return
-
         # Set or clear stock account preferences.
         changed = False
         if isinstance(newStocks, list):
@@ -335,6 +341,14 @@ class StockUpdater:
             stock['amount'] = float(amount['amount'])
         self.extractItemsInList(stock, self.findStock, setAmount, amount = amount)
         self.writeStockInfo()
+
+    def offsetAmount(self, amount, stock):
+        # Adds or removes a specified amount. Ex. 100 adds $100 and -100 reduces by $100.
+        pass
+
+    def multiplyAmount(self, amount, stock):
+        # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%.
+        pass
 
 
 def getListOrString(arg1):
