@@ -1,6 +1,6 @@
 """ Retrieves stock information (like if it accepts fractional trades) for quick reference and stores it in stocks.json.
-Set or clear stock account preference. When enabled in the settings, this allows for stocks to be selectively bought and 
-sold on either rea or paper accounts. Clearing will default to what the settings "using" is set to. Entered as an arguement 
+Set or clear stock account preference. When enabled in the settings, this allows for stocks to be selectively bought and
+sold on either rea or paper accounts. Clearing will default to what the settings "using" is set to. Entered as an arguement
 individually (get_stock_info.py -a ex1) in the terminal or as a list (get_stock_info.py -a 'ex1, ex2, etc...')."""
 import requests
 import sys
@@ -8,7 +8,6 @@ import os
 import json
 import ast
 import argparse
-import threading
 from filelock import FileLock, Timeout
 
 # Get parent directory
@@ -46,8 +45,15 @@ parser.add_argument(
 )
 parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
 parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
-parser.add_argument("-sm", "--set_amount", help="Sets stock amount preference. Ex. 1000 MSFT", nargs=2)
-parser.add_argument("-m", "--amount", action="store_true", help="Gets stock amount preferences and prints them in a readable format")
+parser.add_argument(
+    "-sm", "--set_amount", help="Sets stock amount preference. Ex. 1000 MSFT", nargs=2
+)
+parser.add_argument(
+    "-m",
+    "--amount",
+    action="store_true",
+    help="Gets stock amount preferences and prints them in a readable format",
+)
 parser.add_argument(
     "-ver",
     "--verify",
@@ -65,14 +71,14 @@ except Exception as e:
 class StockUpdater:
     """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it will overwrite the saved list (stocks.json)."""
 
-    def __init__(self, stocklist=[], write=True, testfile=''):
+    def __init__(self, stocklist=[], write=True, testfile=""):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
         # self.debug = True
         self.debug = False
         # For testing. Not implemented yet.
-        if testfile != '':
-            self.testfile = os.path.join(path + os.sep + testfile +".json")
+        if testfile != "":
+            self.testfile = os.path.join(path + os.sep + testfile + ".json")
         # Added for testing purposes so it doesn't make changes.
         self.write = write
 
@@ -87,11 +93,13 @@ class StockUpdater:
             try:
                 lock.acquire(timeout=seconds)
                 if self.debug:
-                    print('file locked')
+                    print("file locked")
             except Timeout:
                 # lock.release()
-                raise Timeout(f'Time exceeded {seconds} seconds. Another process may be locking the file.')
-            
+                raise Timeout(
+                    f"Time exceeded {seconds} seconds. Another process may be locking the file."
+                )
+
     def releaseFile(self):
         lock.release()
         if self.debug:
@@ -184,15 +192,19 @@ class StockUpdater:
                 stock["amount"] = 0
                 print(f"Added blank amount for: {stock['symbol']}")
                 failTest = False
-            elif not (isinstance(stock["amount"], float) or isinstance(stock["amount"], int)):
-                print(f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.')
+            elif not (
+                isinstance(stock["amount"], float) or isinstance(stock["amount"], int)
+            ):
+                print(
+                    f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.'
+                )
                 failTest = False
             # if not "override" in stock:
             #     stock["override"] = False
             #     print(f"Added blank override for: {stock['symbol']}")
             #     failTest = False
         if failTest:
-            print('Verification pass')
+            print("Verification pass")
         self.writeStockInfo()
 
     def stockRemover(self, asset):
@@ -216,7 +228,7 @@ class StockUpdater:
                 break
         else:
             print(f"Stock not found in stocks list to remove: {asset}")
-    
+
     def setStockAmount(self):
         # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
         pass
@@ -234,7 +246,7 @@ class StockUpdater:
             finally:
                 # lock.release()
                 if self.debug:
-                    print('finished writing')
+                    print("finished writing")
         else:
             print("Write not enabled")
         self.releaseFile()
@@ -262,7 +274,7 @@ class StockUpdater:
                     f'Problem found. Stock "{stock}" does not have account setting. Try removing and adding it again or run -ver.'
                 )
         return allstocks, neither, real, paper
-    
+
     def printAccountDetails(self, allstocks, neither, real, paper):
         print(
             f"-----------",
@@ -272,16 +284,17 @@ class StockUpdater:
         )
 
     def printAccountPreference(self):
-        allstocks, neither, real, paper = self.accountDetails('symbol')
+        allstocks, neither, real, paper = self.accountDetails("symbol")
         self.printAccountDetails(allstocks, neither, real, paper)
 
     def printAmountPreference(self):
         def removeZeroBAL(arg1):
             # remove all == 0
-            for n in range(len(arg1)-1, -1, -1):
-                if arg1[n][1]==0:
+            for n in range(len(arg1) - 1, -1, -1):
+                if arg1[n][1] == 0:
                     arg1.pop(n)
-        allstocks, neither, real, paper = self.accountDetails('symbol', 'amount')
+
+        allstocks, neither, real, paper = self.accountDetails("symbol", "amount")
         removeZeroBAL(allstocks)
         removeZeroBAL(neither)
         removeZeroBAL(real)
@@ -293,9 +306,10 @@ class StockUpdater:
         def callbacks(itm):
             temp = callback(itm)
             if not temp:
-                print(f'{itm} not in stocks.json. Add it first with the -a command')
+                print(f"{itm} not in stocks.json. Add it first with the -a command")
                 return
             callback2(temp, args)
+
         if isinstance(data, list):
             for item in data:
                 callbacks(item)
@@ -320,6 +334,7 @@ class StockUpdater:
                 print(f"Stock not found for: {stock}")
                 # self.stockSplitter(stock)
                 return
+
         # Set or clear stock account preferences.
         changed = False
         if isinstance(newStocks, list):
@@ -338,8 +353,9 @@ class StockUpdater:
 
     def setStockAmount(self, amount, stock):
         def setAmount(stock, amount):
-            stock['amount'] = float(amount['amount'])
-        self.extractItemsInList(stock, self.findStock, setAmount, amount = amount)
+            stock["amount"] = float(amount["amount"])
+
+        self.extractItemsInList(stock, self.findStock, setAmount, amount=amount)
         self.writeStockInfo()
 
     def offsetAmount(self, amount, stock):
