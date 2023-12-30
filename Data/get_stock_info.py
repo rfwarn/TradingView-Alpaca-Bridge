@@ -229,10 +229,6 @@ class StockUpdater:
         else:
             print(f"Stock not found in stocks list to remove: {asset}")
 
-    def setStockAmount(self):
-        # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
-        pass
-
     def writeStockInfo(self):
         self.sort()
         if self.write:
@@ -277,10 +273,10 @@ class StockUpdater:
 
     def printAccountDetails(self, allstocks, neither, real, paper):
         print(
-            f"-----------",
+            "-----------",
             f"\nAll stocks: {allstocks}\n--------------------------------------------------------------",
             f"\nNo preference: {neither},\nreal: {real},\npaper: {paper}",
-            f"\n-----------",
+            "\n-----------",
         )
 
     def printAccountPreference(self):
@@ -352,6 +348,7 @@ class StockUpdater:
             return "No changes made"
 
     def setStockAmount(self, amount, stock):
+        # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
         def setAmount(stock, amount):
             stock["amount"] = float(amount["amount"])
 
