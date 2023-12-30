@@ -82,20 +82,23 @@ def test_clear_stock_preference_badName():
     newArgs = getListOrString("tsla")
     stockUpdater.setAccountPreference(newArgs, "")
 
+
 def test_setStockAmount():
-    stockUpdater.setStockAmount("500", 'fcel')
+    stockUpdater.setStockAmount("500", "fcel")
     assert stockUpdater.stocklist[0]["symbol"] == "FCEL"
     assert stockUpdater.stocklist[0]["amount"] == 500
 
+
 def test_setStockAmount2():
-    stockUpdater.setStockAmount("800", ['goog', "fcel"])
+    stockUpdater.setStockAmount("800", ["goog", "fcel"])
     assert stockUpdater.stocklist[1]["symbol"] == "GOOG"
     assert stockUpdater.stocklist[1]["amount"] == 800
     assert stockUpdater.stocklist[0]["amount"] == 800
 
+
 def test_setStockAmount3():
     # testfor item not in stocks list.
-    stockUpdater.setStockAmount("800", 'msft')
+    stockUpdater.setStockAmount("800", "msft")
 
 
 if __name__ == "__main__":
