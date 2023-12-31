@@ -31,41 +31,94 @@ lock = FileLock(lockfile)
 # with open(filename, "r") as f:
 #     stocks = json.load(f)
 
-# create an argument parser
-parser = argparse.ArgumentParser(
-    prog="Get stock info",
-    description="Retrieves stock information and stores it in stocks.json. Can be entered individually like 'MSFT' or in a series like 'MSFT, FCEL'.",
-)
 
-# add arguments
-parser.add_argument("-a", "--add", help="Adds a stock(s) to stocks.json")
-parser.add_argument("-rm", "--remove", help="Removes a stock(s) from stocks.json")
-parser.add_argument(
-    "-c", "--clear", help="Clears a stock(s) preference from stocks.json"
-)
-parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
-parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
-parser.add_argument(
-    "-sm", "--set_amount", help="Sets stock amount preference. Ex. 1000 MSFT", nargs=2
-)
-parser.add_argument(
-    "-m",
-    "--amount",
-    action="store_true",
-    help="Gets stock amount preferences and prints them in a readable format",
-)
-parser.add_argument(
-    "-ver",
-    "--verify",
-    action="store_true",
-    help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't",
-)
+def getListOrString(arg1):
+    # Detmine if argument is string or list
+    try:
+        inputList = ast.literal_eval(arg1)
+        inputList = [stock.strip().upper() for stock in inputList]
+    except ValueError:
+        if "," in arg1:
+            inputList = arg1.split(",")
+            inputList = [stock.strip().upper() for stock in inputList]
+        elif isinstance(arg1, list):
+            inputList = arg1
+            return inputList
+        else:
+            inputList = arg1.strip().upper()
+    return inputList
 
-# parse arguments
-try:
-    args = parser.parse_args()
-except Exception as e:
-    print(e)
+
+def main(args=None):
+    # create an argument parser
+    parser = argparse.ArgumentParser(
+        prog="Get stock info",
+        description="Retrieves stock information and stores it in stocks.json. Can be entered individually like 'MSFT' or in a series like 'MSFT, FCEL'.",
+    )
+
+    # add arguments
+    parser.add_argument("-a", "--add", help="Adds a stock(s) to stocks.json")
+    parser.add_argument("-rm", "--remove", help="Removes a stock(s) from stocks.json")
+    parser.add_argument(
+        "-c", "--clear", help="Clears a stock(s) preference from stocks.json"
+    )
+    parser.add_argument("-rl", "--real", help="Sets a stock(s) preference to real")
+    parser.add_argument("-p", "--paper", help="Sets a stock(s) preference to paper")
+    parser.add_argument(
+        "-sm",
+        "--set_amount",
+        help="Sets stock amount preference. Ex. 1000 MSFT",
+        nargs=2,
+    )
+    parser.add_argument(
+        "-m",
+        "--amount",
+        action="store_true",
+        help="Gets stock amount preferences and prints them in a readable format",
+    )
+    parser.add_argument(
+        "-ver",
+        "--verify",
+        action="store_true",
+        help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't",
+    )
+
+    # parse arguments
+    try:
+        args = parser.parse_args(args)
+        # return args
+    except Exception as e:
+        print(e)
+
+    # Allows for adding, removing, and setting of stock preferences for account (paper/real)
+    manualStock = StockUpdater(args)
+    manualStock.getStockList()
+    newArgs = ""
+    if args.add:
+        newArgs = getListOrString(args.add)
+        manualStock.stockSplitter(newArgs)
+    elif args.remove:
+        newArgs = getListOrString(args.remove)
+        manualStock.stockRemover(newArgs)
+    elif args.clear:
+        newArgs = getListOrString(args.clear)
+        manualStock.setAccountPreference(newArgs, "")
+    elif args.paper:
+        newArgs = getListOrString(args.paper)
+        manualStock.setAccountPreference(newArgs, "paper")
+    elif args.real:
+        newArgs = getListOrString(args.real)
+        manualStock.setAccountPreference(newArgs, "real")
+    elif args.verify:
+        manualStock.verifyStockPreferences()
+    elif args.amount:
+        manualStock.printAmountPreference()
+    elif args.set_amount:
+        newArgs = getListOrString(args.set_amount[1:])
+        manualStock.setStockAmount(args.set_amount[0], newArgs)
+    else:
+        # Print the list of stocks account preferences if no arguments are given.
+        manualStock.printAccountPreference()
 
 
 class StockUpdater:
@@ -364,50 +417,5 @@ class StockUpdater:
         pass
 
 
-def getListOrString(arg1):
-    # Detmine if argument is string or list
-    try:
-        inputList = ast.literal_eval(arg1)
-        inputList = [stock.strip().upper() for stock in inputList]
-    except ValueError:
-        if "," in arg1:
-            inputList = arg1.split(",")
-            inputList = [stock.strip().upper() for stock in inputList]
-        elif isinstance(arg1, list):
-            inputList = arg1
-            return inputList
-        else:
-            inputList = arg1.strip().upper()
-    return inputList
-
-
 if __name__ == "__main__":
-    # Allows for adding, removing, and setting of stock preferences for account (paper/real)
-    manualStock = StockUpdater()
-    manualStock.getStockList()
-    newArgs = ""
-    if args.add:
-        newArgs = getListOrString(args.add)
-        manualStock.stockSplitter(newArgs)
-    elif args.remove:
-        newArgs = getListOrString(args.remove)
-        manualStock.stockRemover(newArgs)
-    elif args.clear:
-        newArgs = getListOrString(args.clear)
-        manualStock.setAccountPreference(newArgs, "")
-    elif args.paper:
-        newArgs = getListOrString(args.paper)
-        manualStock.setAccountPreference(newArgs, "paper")
-    elif args.real:
-        newArgs = getListOrString(args.real)
-        manualStock.setAccountPreference(newArgs, "real")
-    elif args.verify:
-        manualStock.verifyStockPreferences()
-    elif args.amount:
-        manualStock.printAmountPreference()
-    elif args.set_amount:
-        newArgs = getListOrString(args.set_amount[1:])
-        manualStock.setStockAmount(args.set_amount[0], newArgs)
-    else:
-        # Print the list of stocks account preferences if no arguments are given.
-        manualStock.printAccountPreference()
+    main()

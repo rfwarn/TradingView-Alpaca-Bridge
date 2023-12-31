@@ -1,4 +1,4 @@
-from get_stock_info import StockUpdater, getListOrString
+from get_stock_info import StockUpdater, getListOrString, main
 
 stockUpdater = StockUpdater(write=False)
 SL = []
@@ -99,6 +99,10 @@ def test_setStockAmount2():
 def test_setStockAmount3():
     # testfor item not in stocks list.
     stockUpdater.setStockAmount("800", "msft")
+
+
+def test_stock_sysargs():
+    main(['-m'])
 
 
 if __name__ == "__main__":
