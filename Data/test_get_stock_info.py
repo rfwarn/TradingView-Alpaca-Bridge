@@ -97,25 +97,41 @@ def test_setStockAmount2():
 
 
 def test_setStockAmount3():
-    # testfor item not in stocks list.
+    # test for item not in stocks list.
     stockUpdater.setStockAmount("800", "msft")
 
 
+def test_setOverrideMax1():
+    # test for set override.
+    assert not stockUpdater.stocklist[0]["override"]
+    stockUpdater.setOverrideMax("True", "fcel")
+    assert stockUpdater.stocklist[0]["symbol"] == "FCEL"
+    assert stockUpdater.stocklist[0]["override"]
+
+
+def test_setOverrideMax2():
+    # test for invalid set override.
+    try:
+        stockUpdater.setOverrideMax("asdf", "fcel")
+    except Exception:
+        pass
+
+
 def test_stock_sysargs():
-    main(['-m'])
+    main(["-m"])
 
 
-if __name__ == "__main__":
-    test_get_stock_info()
-    test_add_stock_single()
-    test_add_stock_multtext()
-    test_add_stock_multlist()
-    test_add_stock_badName()
-    test_remove_stock()
-    test_set_paper_stock_preference()
-    test_set_real_stock_preference()
-    test_clear_stock_preference()
-    test_clear_stock_preference_badName()
-    test_setStockAmount()
-    test_setStockAmount2()
-    test_setStockAmount3()
+# if __name__ == "__main__":
+#     test_get_stock_info()
+#     test_add_stock_single()
+#     test_add_stock_multtext()
+#     test_add_stock_multlist()
+#     test_add_stock_badName()
+#     test_remove_stock()
+#     test_set_paper_stock_preference()
+#     test_set_real_stock_preference()
+#     test_clear_stock_preference()
+#     test_clear_stock_preference_badName()
+#     test_setStockAmount()
+#     test_setStockAmount2()
+#     test_setStockAmount3()

@@ -28,9 +28,6 @@ if not os.path.isfile(filename):
 lockfile = f"{filename}.lock"
 lock = FileLock(lockfile)
 
-# with open(filename, "r") as f:
-#     stocks = json.load(f)
-
 
 def getListOrString(arg1):
     # Detmine if argument is string or list
@@ -83,6 +80,13 @@ def main(args=None):
         help="Verifes stocks in stocks.json have account and amount preferences and adds them if they don't",
     )
 
+    parser.add_argument(
+        "-omax",
+        "--override_max",
+        help="Enable/Disable override for max positions.",
+        nargs=2,
+    )
+
     # parse arguments
     try:
         args = parser.parse_args(args)
@@ -116,6 +120,9 @@ def main(args=None):
     elif args.set_amount:
         newArgs = getListOrString(args.set_amount[1:])
         manualStock.setStockAmount(args.set_amount[0], newArgs)
+    elif args.override_max:
+        newArgs = getListOrString(args.override_max[1:])
+        manualStock.setOverrideMax(args.override_max[0], newArgs)
     else:
         # Print the list of stocks account preferences if no arguments are given.
         manualStock.printAccountPreference()
@@ -222,14 +229,14 @@ class StockUpdater:
                     self.stocklist[n]["account"] = ""
                 if not "amount" in stock:
                     self.stocklist[n]["amount"] = 0
-                # if not "override" in stock:
-                #     self.stocklist[n]["override"] = False
+                if not "override" in stock:
+                    self.stocklist[n]["override"] = False
                 self.stocklist[n].update(asset)
                 break
         else:
             asset["account"] = ""
             asset["amount"] = 0
-            # asset["override"] = False
+            asset["override"] = False
             self.stocklist.append(asset)
         return
 
@@ -252,10 +259,10 @@ class StockUpdater:
                     f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.'
                 )
                 failTest = False
-            # if not "override" in stock:
-            #     stock["override"] = False
-            #     print(f"Added blank override for: {stock['symbol']}")
-            #     failTest = False
+            if not "override" in stock:
+                stock["override"] = False
+                print(f"Added blank override for: {stock['symbol']}")
+                failTest = False
         if failTest:
             print("Verification pass")
         self.writeStockInfo()
@@ -282,9 +289,11 @@ class StockUpdater:
         else:
             print(f"Stock not found in stocks list to remove: {asset}")
 
-    def writeStockInfo(self):
+    def writeStockInfo(self, changed=True):
         self.sort()
-        if self.write:
+        if not changed:
+            print("No changes to write")
+        elif self.write:
             try:
                 # with lock.acquire(timeout=2):
                 with open(filename, "w+") as f:
@@ -356,8 +365,9 @@ class StockUpdater:
             temp = callback(itm)
             if not temp:
                 print(f"{itm} not in stocks.json. Add it first with the -a command")
-                return
+                return False
             callback2(temp, args)
+            return True
 
         if isinstance(data, list):
             for item in data:
@@ -395,25 +405,38 @@ class StockUpdater:
             raise Exception(
                 f"setAccountPreference received wrong type {type(newStocks)}"
             )
-        if changed:
-            self.writeStockInfo()
-        else:
-            return "No changes made"
+        self.writeStockInfo(changed)
 
     def setStockAmount(self, amount, stock):
         # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
         def setAmount(stock, amount):
-            stock["amount"] = float(amount["amount"])
+            stock["amount"] = amount["amount"]
 
-        self.extractItemsInList(stock, self.findStock, setAmount, amount=amount)
+        self.extractItemsInList(stock, self.findStock, setAmount, amount=float(amount))
+        self.writeStockInfo()
+
+    def setOverrideMax(self, override, stock):
+        # Enables overriding of maxpositions if set >0. Not implemented yet.
+        def setOverride(stock, override):
+            stock["override"] = override["override"]
+
+        if override.lower() == "True".lower():
+            override = True
+        elif override.lower() == "False".lower():
+            override = False
+        else:
+            raise Exception(
+                f"Override argument not set as boolean. Use True or False as arguement. Used: {override}"
+            )
+        changed = self.extractItemsInList(stock, self.findStock, setOverride, override=override)
         self.writeStockInfo()
 
     def offsetAmount(self, amount, stock):
-        # Adds or removes a specified amount. Ex. 100 adds $100 and -100 reduces by $100.
+        # Adds or removes a specified amount. Ex. 100 adds $100 and -100 reduces by $100. Not implemented yet.
         pass
 
     def multiplyAmount(self, amount, stock):
-        # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%.
+        # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%. Not implemented yet.
         pass
 
 
