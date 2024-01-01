@@ -297,7 +297,7 @@ class AutomatedTrader:
             self.options["positions"] = self.client.get_open_position(
                 self.data["stock"]
             )
-        except Exception as e:
+        except Exception:
             self.options["positions"] = None
 
     def setAllPositions(self):
@@ -454,7 +454,7 @@ class AutomatedTrader:
             )
             return
         self.orderType(amount, side, self.options["limit"])
-        self.submitOrder()
+        return self.submitOrder()
 
     def orderType(self, amount, side, limit):
         # Setup buy/sell order
@@ -498,9 +498,17 @@ class AutomatedTrader:
         except AttributeError:
             return "failed to process order. Order data doesn't exist."
 
+        try:
+            override = self.asset['override']
+        except TypeError:
+            override = False
+        except KeyError:
+            logger.info('override key in stocks.json seems to be missing. Run get_stock_info.py -ver to check if they exist and add them if not. default is False')
+            override = False
+
         # Logic to factor in max position if enabled. Creates a log warning if positions exceed max. If it's at the max it won't buy
         if self.order_data.side == OrderSide.BUY:
-            if self.options["maxPositions"] == 0:
+            if self.options["maxPositions"] == 0 or override:
                 pass
             elif len(self.options["allPositions"]) > self.options["maxPositions"]:
                 err = f'Over max positions: max positions - {self.options["maxPositions"]}, current positions - {[x.symbol for x in self.options["allPositions"]]}'
@@ -511,14 +519,14 @@ class AutomatedTrader:
                 logger.info(
                     f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}'
                 )
-                return False
+                return 'Max Positions'
 
         # escape and don't actually submit order if not enabled. For debugging/testing purposes.
         if not self.options["enabled"]:
             logger.debug(
                 f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-            return
+            return 'Not enabled'
         # Submit order
         self.order = self.client.submit_order(self.order_data)
         # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders. self.asset will be None if it isn't found in the stocklist so it won't cause an error.
@@ -527,7 +535,7 @@ class AutomatedTrader:
         # Verify order if enabled in settings.
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
-        
+
         # TODO: need to add code here for updating stocks.json with new amount based off individual profit/loss per stock if enabled.
         # Lookup orders and update amount
         if bool(self.newOrders):
@@ -537,6 +545,7 @@ class AutomatedTrader:
         # Verify order exited in 1 of 3 ways (cancel, fail, fill).
         orderSideBuy = str(order.side) == "OrderSide.BUY"
         orderSideSell = str(order.side) == "OrderSide.SELL"
+
         def amountUpdate():
             try:
                 if order and self.newOrders['amount'] > 0:
