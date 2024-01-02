@@ -21,3 +21,4 @@ settings.py
 Data/stocks.*
 Keys/*
 !Keys/readme.md
+!Keys/__init__.py

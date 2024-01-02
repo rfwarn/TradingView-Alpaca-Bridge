@@ -1,4 +1,4 @@
-from get_stock_info import StockUpdater, getListOrString, main
+from Data.get_stock_info import StockUpdater, getListOrString, main
 
 stockUpdater = StockUpdater(write=False)
 SL = []
