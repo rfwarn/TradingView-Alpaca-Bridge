@@ -48,8 +48,8 @@ accountPaper = getKeys("paperTrading")
 # stockUpdater = StockUpdater()
 # stocks = stockUpdater.getStockList()
 
-# Clear lock file if it exists. This is for edge cases if the program is stopped before the lock is 
-# released (primarily when debugging) and the file isn't deleted before running it again preventing 
+# Clear lock file if it exists. This is for edge cases if the program is stopped before the lock is
+# released (primarily when debugging) and the file isn't deleted before running it again preventing
 # future access.
 try:
     path = os.path.dirname(__file__)
@@ -190,7 +190,7 @@ class AutomatedTrader:
     def __del__(self):
         del self.stockUpdater
         if self.debug:
-            print('Object deconstructor ran')
+            print("Object deconstructor ran")
 
     def createClientAndSettings(self):
         # Creates the trading client based on real or paper account for testing purposes.
@@ -332,8 +332,8 @@ class AutomatedTrader:
 
         perStock = False
         try:
-            if float(self.asset['amount'])>0 and self.options['perStockAmount']:
-                self.options["buyAmt"] = float(self.asset['amount'])
+            if float(self.asset["amount"]) > 0 and self.options["perStockAmount"]:
+                self.options["buyAmt"] = float(self.asset["amount"])
                 perStock = True
         except TypeError:
             pass
@@ -499,11 +499,13 @@ class AutomatedTrader:
             return "failed to process order. Order data doesn't exist."
 
         try:
-            override = self.asset['override']
+            override = self.asset["override"]
         except TypeError:
             override = False
         except KeyError:
-            logger.info('override key in stocks.json seems to be missing. Run get_stock_info.py -ver to check if they exist and add them if not. default is False')
+            logger.info(
+                "override key in stocks.json seems to be missing. Run get_stock_info.py -ver to check if they exist and add them if not. default is False"
+            )
             override = False
 
         # Logic to factor in max position if enabled. Creates a log warning if positions exceed max. If it's at the max it won't buy
@@ -519,19 +521,28 @@ class AutomatedTrader:
                 logger.info(
                     f'At Max Positions. Order not created for: {self.data["stock"]}, {self.data["action"]}, {self.data["position"]}'
                 )
-                return 'Max Positions'
+                return "Max Positions"
 
         # escape and don't actually submit order if not enabled. For debugging/testing purposes.
         if not self.options["enabled"]:
             logger.debug(
                 f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
-            return 'Not enabled'
+            return "Not enabled"
         # Submit order
         self.order = self.client.submit_order(self.order_data)
         # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders. self.asset will be None if it isn't found in the stocklist so it won't cause an error.
-        if self.options['perStockAmountCompounding'] and self.options['perStockAmount'] and self.asset:
-            self.newOrders = {"symbol": self.order.symbol, "clientid": self.order.client_order_id, "id": self.order.id.hex, "amount": self.asset['amount']}
+        if (
+            self.options["perStockAmountCompounding"]
+            and self.options["perStockAmount"]
+            and self.asset
+        ):
+            self.newOrders = {
+                "symbol": self.order.symbol,
+                "clientid": self.order.client_order_id,
+                "id": self.order.id.hex,
+                "amount": self.asset["amount"],
+            }
         # Verify order if enabled in settings.
         if self.options["verifyOrders"]:
             self.verifyOrder(self.order)
@@ -548,22 +559,29 @@ class AutomatedTrader:
 
         def amountUpdate():
             try:
-                if order and self.newOrders['amount'] > 0:
+                if order and self.newOrders["amount"] > 0:
                     if order.filled_avg_price and orderSideBuy:
-                        self.newOrders['amount'] -= float(order.filled_qty) * float(order.filled_avg_price)
-                        if self.newOrders['amount'] <= 0:
-                            logger.warning(f'Price differential causing overspending for: {self.order.symbol}')
-                            self.newOrders['amount'] = 0.01
-                        if self.newOrders['amount'] == 0:
-                            self.newOrders['amount'] = 0.01
+                        self.newOrders["amount"] -= float(order.filled_qty) * float(
+                            order.filled_avg_price
+                        )
+                        if self.newOrders["amount"] <= 0:
+                            logger.warning(
+                                f"Price differential causing overspending for: {self.order.symbol}"
+                            )
+                            self.newOrders["amount"] = 0.01
+                        if self.newOrders["amount"] == 0:
+                            self.newOrders["amount"] = 0.01
                     elif order.filled_avg_price and orderSideSell:
-                        self.newOrders['amount'] += float(order.filled_qty) * float(order.filled_avg_price)
-                elif order and self.newOrders['amount'] == 0:
+                        self.newOrders["amount"] += float(order.filled_qty) * float(
+                            order.filled_avg_price
+                        )
+                elif order and self.newOrders["amount"] == 0:
                     pass
                 else:
-                    logger.warning('order == None')
+                    logger.warning("order == None")
             except KeyError:
                 pass
+
         # TODO: Need to add async stream method for checking for order completion.
         maxTime = self.options["maxTime"]
         totalMaxTime = self.options["totalMaxTime"]
@@ -598,7 +616,7 @@ class AutomatedTrader:
                     else:
                         # competed at this point and returns True to indicate cancel was successful
                         return True
-                # Changes order to market after initial maxtime by cancelling previous order and creating a new one. 
+                # Changes order to market after initial maxtime by cancelling previous order and creating a new one.
                 # Determined in settings.
                 elif (self.options["buyTimeout"] == "Market" and orderSideBuy) or (
                     self.options["sellTimeout"] == "Market" and orderSideSell
@@ -610,10 +628,10 @@ class AutomatedTrader:
                     timeout = True
                     # verify canceled order
                     if self.verifyOrder(order, True):
-                        # Once order is canceled, find how many didn't get filled for new market order and append 
+                        # Once order is canceled, find how many didn't get filled for new market order and append
                         # filled qty to tracker.
                         amountRemaining = float(order.qty) - float(order.filled_qty)
-                        # Set the new order. This will also set the new self.order_data based on the prior order info, 
+                        # Set the new order. This will also set the new self.order_data based on the prior order info,
                         # the updated amount left to buy/sell, and False for limit to make it a market order.
                         self.orderType(amountRemaining, order.side, False)
                         # Submit the order and udpate the local variable.
@@ -690,8 +708,8 @@ class AutomatedTrader:
         # Updates stocks.json data with new stock amount after selling.
         # TODO: Might need to look at retriving the order(s) after to make sure the data is accurate.
         try:
-            if self.newOrders['amount'] > 0:
-                self.asset["amount"] = self.newOrders['amount']
+            if self.newOrders["amount"] > 0:
+                self.asset["amount"] = self.newOrders["amount"]
                 if not self.testAccount:
                     self.stockUpdater.writeStockInfo()
                 else:
