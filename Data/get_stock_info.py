@@ -17,15 +17,20 @@ sys.path.append(parent)
 
 from getKeys import getKeys
 
-filename = os.path.join(path + os.sep + "stocks.json")
+
+def filename(name):
+    return os.path.join(path + os.sep + name + ".json")
+
+
+fullList = filename("stocks")
 
 # Check to see if the file exists and if not create it with a blank list.
-if not os.path.isfile(filename):
-    f = open(filename, "x")
+if not os.path.isfile(fullList):
+    f = open(fullList, "x")
     f.write("[]")
 
 # file and lock to prevent potential errors
-lockfile = f"{filename}.lock"
+lockfile = f"{fullList}.lock"
 lock = FileLock(lockfile)
 
 
@@ -168,7 +173,15 @@ class StockUpdater:
     def getStockList(self):
         # Gets the list from the stocks.json file and loads them into stocklist.
         self.lockFile()
-        with open(filename, "r") as f:
+        with open(fullList, "r") as f:
+            stocks = json.load(f)
+        self.stocklist = stocks
+        return stocks
+
+    def getStockListIndividual(self):
+        # Gets the list from the the individual stock file and loads them into stocklist if they exist.
+        self.lockFile()
+        with open(fullList, "r") as f:
             stocks = json.load(f)
         self.stocklist = stocks
         return stocks
@@ -296,7 +309,7 @@ class StockUpdater:
         elif self.write:
             try:
                 # with lock.acquire(timeout=2):
-                with open(filename, "w+") as f:
+                with open(fullList, "w+") as f:
                     json.dump(self.stocklist, f, indent=4)
             # except Timeout:
             #     lock.release()
@@ -428,7 +441,9 @@ class StockUpdater:
             raise Exception(
                 f"Override argument not set as boolean. Use True or False as arguement. Used: {override}"
             )
-        changed = self.extractItemsInList(stock, self.findStock, setOverride, override=override)
+        changed = self.extractItemsInList(
+            stock, self.findStock, setOverride, override=override
+        )
         self.writeStockInfo()
 
     def offsetAmount(self, amount, stock):
