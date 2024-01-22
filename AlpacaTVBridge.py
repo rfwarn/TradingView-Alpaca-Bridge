@@ -480,6 +480,7 @@ class AutomatedTrader:
                 limit_price=round(
                     self.data["price"]
                     + (
+                        # Set LimitAmt up or down from price depending on buy or sell.
                         self.options["limitAmt"]
                         if side == OrderSide.BUY
                         else -self.options["limitAmt"]
@@ -488,7 +489,12 @@ class AutomatedTrader:
                 ),
                 qty=amount,  # amount of stock to buy.
                 side=side,
-                time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
+                # time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
+                # Stocks after hours must be traded with DAY.
+                # time_in_force=TimeInForce.DAY,
+                # Crypto must be traded with GTC.
+                time_in_force=TimeInForce.GTC,
+                extended_hours=self.options["extendedHours"]
             )
         self.order_data = order_data
 
