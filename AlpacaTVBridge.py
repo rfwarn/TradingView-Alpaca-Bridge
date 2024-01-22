@@ -489,8 +489,9 @@ class AutomatedTrader:
                 ),
                 qty=amount,  # amount of stock to buy.
                 side=side,
+                # Fractional trading must use DAY.
                 # time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
-                # Stocks after hours must be traded with DAY.
+                # Stocks after hours must be traded with DAY and extendedhours option in settings has to be enabled.
                 # time_in_force=TimeInForce.DAY,
                 # Crypto must be traded with GTC.
                 time_in_force=TimeInForce.GTC,
