@@ -16,8 +16,8 @@ options = {
         # An example would be if you set this to 2000 and a buy and sell action gained 10%, this value would change to
         #   2200 which is how much it would spend buying the stock next time.
         "perStockAmount": True,
-        # Allows for compounding of individual stocks. perStockAmount must be True and value for symbol in 
-        # stocks.json must be present and have an amount >0. Can use "python get_stock_info.py -m" in the Data directory 
+        # Allows for compounding of individual stocks. perStockAmount must be True and value for symbol in
+        # stocks.json must be present and have an amount >0. Can use "python get_stock_info.py -m" in the Data directory
         # to get stock preferences and "python get_stock_info.py -sm 1000 QQQ" for example to set am amount.
         # Verify orders also has to be True for this to work.
         "perStockAmountCompounding": True,
@@ -51,6 +51,8 @@ options = {
         "testMode": True,
         # enabled will allow submission of orders.
         "enabled": True,
+        # Enables or disables extended hours. Must be a limit order to work.
+        "extendedHours": True,
         # Setting to True will impose a predefined limit for trades. Will make market orders if set to False.
         "limit": True,
         # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
