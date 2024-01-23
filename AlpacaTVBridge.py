@@ -1,4 +1,5 @@
 from flask import Flask, request, Response
+from alpaca.common.exceptions import APIError
 from waitress import serve
 from getKeys import getKeys
 from alpaca.trading.client import TradingClient
@@ -492,11 +493,18 @@ class AutomatedTrader:
                 # Fractional trading must use DAY.
                 # time_in_force=TimeInForce.DAY if fractional else TimeInForce.GTC,
                 # Stocks after hours must be traded with DAY and extendedhours option in settings has to be enabled.
-                # time_in_force=TimeInForce.DAY,
+                time_in_force=TimeInForce.DAY,
                 # Crypto must be traded with GTC.
-                time_in_force=TimeInForce.GTC,
+                # time_in_force=TimeInForce.GTC,
                 extended_hours=self.options["extendedHours"]
             )
+        # Check to see if an order was already placed and get the time_in_force.
+        try:
+            # if self.order_data:
+            if order_data.time_in_force != self.order_data.time_in_force:
+                order_data.time_in_force = self.order_data.time_in_force
+        except AttributeError:
+            pass
         self.order_data = order_data
 
     def submitOrder(self):
@@ -536,8 +544,21 @@ class AutomatedTrader:
                 f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return "Not enabled"
+        
         # Submit order
-        self.order = self.client.submit_order(self.order_data)
+        try:
+            self.order = self.client.submit_order(self.order_data)
+        except APIError as e:
+            if e.code == 42210000:
+                if self.order_data.time_in_force == TimeInForce.DAY:
+                    self.order_data.time_in_force = TimeInForce.GTC
+                elif self.order_data.time_in_force == TimeInForce.GTC:
+                    self.order_data.time_in_force = TimeInForce.DAY
+                else:
+                    raise ValueError('Unhandled Time_in_force - not GTC or DAY.')
+                self.order = self.client.submit_order(self.order_data)
+            else:
+                raise Exception(e._error)
         # Verifies option is enabled and asset exists in stocks.json. Loads the amount to newOrders. self.asset will be None if it isn't found in the stocklist so it won't cause an error.
         if (
             self.options["perStockAmountCompounding"]
