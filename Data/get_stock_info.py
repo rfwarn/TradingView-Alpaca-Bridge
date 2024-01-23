@@ -100,7 +100,7 @@ def main(args=None):
         print(e)
 
     # Allows for adding, removing, and setting of stock preferences for account (paper/real)
-    manualStock = StockUpdater(args)
+    manualStock = StockUpdater()
     manualStock.getStockList()
     newArgs = ""
     if args.add:
@@ -130,6 +130,7 @@ def main(args=None):
         manualStock.setOverrideMax(args.override_max[0], newArgs)
     else:
         # Print the list of stocks account preferences if no arguments are given.
+        # manualStock.getStockList()
         manualStock.printAccountPreference()
 
 
