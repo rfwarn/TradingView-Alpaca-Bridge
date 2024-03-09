@@ -8,6 +8,7 @@ live*
 *.pyo
 *.psd
 *.bat
+*.db
 *.sh
 __pycache__/
 build/

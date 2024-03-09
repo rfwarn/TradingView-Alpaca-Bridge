@@ -56,7 +56,7 @@ options = {
         # Setting to True will impose a predefined limit for trades. Will make market orders if set to False.
         "limit": True,
         # How much to limit the buy/sell price. Order not filled before sell will be canceled. Change to %
-        "limitAmt": 0.05,
+        "limitAmt": 0.15,
         # Limit threshold to change to % based above it.
         "limitThreshold": 100,
         # Limit percent for everything above limitThreshold (Ex. Buy @$200 would make the limit $200.16 for a $0.16 limit)
@@ -64,9 +64,9 @@ options = {
         # Enable/disable order verification. Suggested use for market orders or high frequency trading (roughly buy/sell within a minute).
         "verifyOrders": True,
         # Maxtime in seconds before first timeout for an order. Only used when verifyOrders is enabled.
-        "maxTime": 5,
+        "maxTime": 8,
         # Total max time before canceling the order. Only used when verifyOrders is enabled.
-        "totalMaxTime": 8,
+        "totalMaxTime": 5,
         # Buy and sell cancel preferences after max time.
         # Failsafe for limit order. Options are [Cancel, Market].
         "buyTimeout": "Cancel",
