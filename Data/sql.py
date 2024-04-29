@@ -11,7 +11,7 @@ current_file_path = Path(__file__)
 # sys.path.append(parent)
 
 # conn = sqlite3.connect(os.path.join(path + os.sep + "stocks.db"))
-conn = sqlite3.connect(current_file_path.parent / "stocks.db")
+conn = sqlite3.connect(str(current_file_path.parent / "stocks.db"))
 
 c = conn.cursor()
 
