@@ -197,9 +197,11 @@ class AutomatedTrader:
         # Creates the trading client based on real or paper account for testing purposes.
         if self.testAccount != None:
             # For testing purposes
-            self.options.update(settingsPaper) if self.testAccount[
-                "paper"
-            ] else self.options.update(settingsReal)
+            (
+                self.options.update(settingsPaper)
+                if self.testAccount["paper"]
+                else self.options.update(settingsReal)
+            )
             return TradingClient(**self.testAccount)
         elif not settings["perStockPreference"]:
             # Use account in settings if "perStockPreference" is False
@@ -259,9 +261,11 @@ class AutomatedTrader:
         elif len(extractedData.groups()) == 4:
             self.data = {
                 "action": extractedData.group(1),
-                "position": extractedData.group(2).upper()
-                if extractedData.group(2) != None
-                else extractedData.group(2),
+                "position": (
+                    extractedData.group(2).upper()
+                    if extractedData.group(2) != None
+                    else extractedData.group(2)
+                ),
                 "stock": extractedData.group(3),
                 "price": float(extractedData.group(4)),
             }
@@ -496,7 +500,7 @@ class AutomatedTrader:
                 time_in_force=TimeInForce.DAY,
                 # Crypto must be traded with GTC.
                 # time_in_force=TimeInForce.GTC,
-                extended_hours=self.options["extendedHours"]
+                extended_hours=self.options["extendedHours"],
             )
         # Check to see if an order was already placed and get the time_in_force.
         try:
@@ -544,7 +548,7 @@ class AutomatedTrader:
                 f'Not enabled, order not placed for: {self.data["stock"]}, action: {self.data["action"]} {self.order_data.type._value_}, price: {self.data["price"]}, quantity: {self.order_data.qty}'
             )
             return "Not enabled"
-        
+
         # Submit order
         try:
             self.order = self.client.submit_order(self.order_data)
@@ -555,7 +559,7 @@ class AutomatedTrader:
                 elif self.order_data.time_in_force == TimeInForce.GTC:
                     self.order_data.time_in_force = TimeInForce.DAY
                 else:
-                    raise ValueError('Unhandled Time_in_force - not GTC or DAY.')
+                    raise ValueError("Unhandled Time_in_force - not GTC or DAY.")
                 self.order = self.client.submit_order(self.order_data)
             else:
                 raise Exception(e._error)
@@ -769,10 +773,11 @@ if __name__ == "__main__":
     # Display general account info.
     acctInfo()
     # Start the app
+    threads = 1
     try:
         if sys.argv[1] == "serveTV":
-            serve(app, port=5000, threads=4, host="0.0.0.0")
+            serve(app, port=5000, threads=threads, host="0.0.0.0")
         else:
-            serve(app, port=5000, threads=4, host="127.0.0.1")
+            serve(app, port=5000, threads=threads, host="127.0.0.1")
     except IndexError:
-        serve(app, port=5000, threads=4, host="127.0.0.1")
+        serve(app, port=5000, threads=threads, host="127.0.0.1")
