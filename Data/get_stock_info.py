@@ -9,6 +9,7 @@ import os
 import json
 import ast
 import argparse
+import logging
 from filelock import FileLock, Timeout
 
 # Get parent directory
@@ -16,12 +17,23 @@ path = os.path.dirname(__file__)
 parent = os.path.abspath(os.path.join(path, os.pardir))
 sys.path.append(parent)
 
+# Paths
+conv_log = path + os.sep + "stock_info.log"
+
 from getKeys import getKeys
 
 
 def filename(name):
     return os.path.join(path + os.sep + name + ".json")
 
+
+# Logging
+logging.basicConfig(
+    filename=conv_log,
+    filemode="a",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 
 fullList = filename("stocks")
 
@@ -192,24 +204,25 @@ class StockUpdater:
         list.sort(self.stocklist, key=lambda stock: stock["symbol"])
 
     def stockSplitter(self, assetList):
+        def Multistock(assetList):
+            # Parses a list of stocks and uses getSockInfo function to retrieve informaion.
+            assets = []
+            for item in assetList:
+                assets.append(self.updateStockInfo(self.getStockInfo(item)))
+
+            return assets
+
         # For adding new stocks. Determines if the input is an indicidual stock or list.
         if isinstance(assetList, list):
-            self.Multistock(assetList)
+            Multistock(assetList)
         elif isinstance(assetList, str):
             self.updateStockInfo(self.getStockInfo(assetList))
         else:
             raise Exception(f"stockSplitter received wrong type {type(assetList)}")
         sorted(self.stocklist, key=lambda stock: stock["symbol"])
+        logging.info(f"Added: {assetList}")
         self.writeStockInfo()
         return self.stocklist
-
-    def Multistock(self, assetList):
-        # Parses a list of stocks and uses getSockInfo function to retrieve informaion.
-        assets = []
-        for item in assetList:
-            assets.append(self.updateStockInfo(self.getStockInfo(item)))
-
-        return assets
 
     def getStockInfo(self, asset):
         # Get individual stock information and store it in stocks.JSON in the Data directory.
@@ -261,48 +274,56 @@ class StockUpdater:
         for stock in self.stocklist:
             if not "account" in stock:
                 stock["account"] = ""
-                print(f"Added blank account for: {stock['symbol']}")
+                msg = f"Added blank account for: {stock['symbol']}"
+                logging.info(msg)
+                print(msg)
                 failTest = False
             if not "amount" in stock:
                 stock["amount"] = 0
-                print(f"Added blank amount for: {stock['symbol']}")
+                msg = f"Added blank amount for: {stock['symbol']}"
+                logging.info(msg)
+                print(msg)
                 failTest = False
             elif not (
                 isinstance(stock["amount"], float) or isinstance(stock["amount"], int)
             ):
-                print(
-                    f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.'
-                )
+                msg = f'Invalid value for: {stock["symbol"]} of: {type(stock["amount"])}. Expected float or int.'
+                logging.info(msg)
+                print(msg)
                 failTest = False
             if not "override" in stock:
                 stock["override"] = False
-                print(f"Added blank override for: {stock['symbol']}")
+                msg = f"Added blank override for: {stock['symbol']}"
+                logging.info(msg)
+                print(msg)
                 failTest = False
         if failTest:
             print("Verification pass")
+        logging.info("Verified stock preferences - no issues found")
         self.writeStockInfo()
 
     def stockRemover(self, asset):
         # removes individual stocks or a list of stocks. Main app
+        def removeStock(asset):
+            # removes individual stocks (ex. "AAPL")
+            asset = asset.upper()
+            print(f"Removing stock: {asset}")
+            logging.info(f"Removed stock: {asset}")
+            for n, stock in enumerate(self.stocklist):
+                if asset.upper() == stock["symbol"]:
+                    self.stocklist.pop(n)
+                    break
+            else:
+                print(f"Stock not found in stocks list to remove: {asset}")
+
         if isinstance(asset, list):
             for item in asset:
-                self.removeStock(item)
+                removeStock(item)
         elif isinstance(asset, str):
-            self.removeStock(asset)
+            removeStock(asset)
         else:
             raise Exception(f"stockRemover received wrong type {type(asset)}")
         self.writeStockInfo()
-
-    def removeStock(self, asset):
-        # removes individual stocks (ex. "AAPL")
-        asset = asset.upper()
-        print(f"Removing stock: {asset}")
-        for n, stock in enumerate(self.stocklist):
-            if asset.upper() == stock["symbol"]:
-                self.stocklist.pop(n)
-                break
-        else:
-            print(f"Stock not found in stocks list to remove: {asset}")
 
     def writeStockInfo(self, changed=True):
         self.sort()
@@ -391,10 +412,12 @@ class StockUpdater:
             callbacks(data)
 
     def setAccountPreference(self, newStocks, accountPref):
-        # Changs account preference (i.e. 'real', 'paper')
+        # Changes account preference ('real', 'paper', 'clear')
         def printPrefChange(stock, pref):
             # Function to print stock preference changes.
-            print(f"Stock preference for: {stock}, set to {pref if pref else 'clear'}")
+            msg = f"Stock preference for: {stock}, set to {pref if pref else 'clear'}"
+            logging.info(msg)
+            print(msg)
 
         def stockUpdatePref(stock, pref):
             # Stock updating function
@@ -428,10 +451,11 @@ class StockUpdater:
             stock["amount"] = amount["amount"]
 
         self.extractItemsInList(stock, self.findStock, setAmount, amount=float(amount))
+        logging.info(f"Amount set: {stock} {amount}")
         self.writeStockInfo()
 
     def setOverrideMax(self, override, stock):
-        # Enables overriding of maxpositions if set >0. Not implemented yet.
+        # Enables overriding of maxpositions if set >0. Not implemented yet. Default is False.
         def setOverride(stock, override):
             stock["override"] = override["override"]
 
@@ -446,6 +470,7 @@ class StockUpdater:
         changed = self.extractItemsInList(
             stock, self.findStock, setOverride, override=override
         )
+        logging.info(f"Override set: {stock} {override}")
         self.writeStockInfo()
 
     def offsetAmount(self, amount, stock):
