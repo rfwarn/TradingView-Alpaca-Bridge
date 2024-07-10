@@ -9,7 +9,7 @@ from getKeys import getKeys
 
 
 def genReport(account: str = "paperTrading", days: int = 180):
-    """Generates a Alpaca buy/sell report for last x (default 30) days. At the moment,
+    """Generates a Alpaca buy/sell report for last x (default 180) days. At the moment,
     it can only retrieve a max of 500 transactions (alpaca API limitation) per request.
     Specify 'paperTrading' or 'realTrading' ('paperTrading' default) for account.
     """
