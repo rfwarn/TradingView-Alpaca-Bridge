@@ -10,6 +10,7 @@ import json
 import ast
 import argparse
 import logging
+from alpaca.trading.client import TradingClient
 from filelock import FileLock, Timeout
 
 # Get parent directory
@@ -105,6 +106,20 @@ def main(args=None):
         nargs=2,
     )
 
+    parser.add_argument(
+        "-oa",
+        "--offset_amount",
+        help="Offsets a stock(s) by a dollar value. (ex. 100 MSFT, -100 MSFT)",
+        nargs=2,
+    )
+
+    parser.add_argument(
+        "-ma",
+        "--multiply_amount",
+        help="Multiplies a stock(s) by a dollar value. (ex. 100 MSFT, -100 MSFT)",
+        nargs=2,
+    )
+
     # parse arguments
     try:
         args = parser.parse_args(args)
@@ -141,6 +156,12 @@ def main(args=None):
     elif args.override_max:
         newArgs = getListOrString(args.override_max[1:])
         manualStock.setOverrideMax(args.override_max[0], newArgs)
+    elif args.offset_amount:
+        newArgs = getListOrString(args.offset_amount[1:])
+        manualStock.offsetAmount(args.offset_amount[0], newArgs)
+    elif args.multiply_amount:
+        newArgs = getListOrString(args.multiply_amount[1:])
+        manualStock.multiplyAmount(args.multiply_amount[0], newArgs)
     else:
         # Print the list of stocks account preferences if no arguments are given.
         # manualStock.getStockList()
@@ -204,6 +225,7 @@ class StockUpdater:
         list.sort(self.stocklist, key=lambda stock: stock["symbol"])
 
     def stockSplitter(self, assetList):
+        # For adding new stocks. Determines if the input is an indicidual stock or list.
         def Multistock(assetList):
             # Parses a list of stocks and uses getSockInfo function to retrieve informaion.
             assets = []
@@ -212,7 +234,6 @@ class StockUpdater:
 
             return assets
 
-        # For adding new stocks. Determines if the input is an indicidual stock or list.
         if isinstance(assetList, list):
             Multistock(assetList)
         elif isinstance(assetList, str):
@@ -398,18 +419,22 @@ class StockUpdater:
     def extractItemsInList(self, data, callback, callback2, **args):
         # function created to reduce dupicates of code from the lists and strings.
         def callbacks(itm):
+            nonlocal changed
             temp = callback(itm)
             if not temp:
                 print(f"{itm} not in stocks.json. Add it first with the -a command")
                 return False
-            callback2(temp, args)
+            callback2(temp, **args)
+            changed = True
             return True
 
+        changed = False
         if isinstance(data, list):
             for item in data:
                 callbacks(item)
         elif isinstance(data, str):
             callbacks(data)
+        return changed
 
     def setAccountPreference(self, newStocks, accountPref):
         # Changes account preference ('real', 'paper', 'clear')
@@ -448,7 +473,8 @@ class StockUpdater:
     def setStockAmount(self, amount, stock):
         # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
         def setAmount(stock, amount):
-            stock["amount"] = amount["amount"]
+            # stock["amount"] = amount["amount"]
+            stock["amount"] = amount
 
         self.extractItemsInList(stock, self.findStock, setAmount, amount=float(amount))
         logging.info(f"Amount set: {stock} {amount}")
@@ -457,7 +483,7 @@ class StockUpdater:
     def setOverrideMax(self, override, stock):
         # Enables overriding of maxpositions if set >0. Not implemented yet. Default is False.
         def setOverride(stock, override):
-            stock["override"] = override["override"]
+            stock["override"] = override
 
         if override.lower() == "True".lower():
             override = True
@@ -474,12 +500,39 @@ class StockUpdater:
         self.writeStockInfo()
 
     def offsetAmount(self, amount, stock):
-        # Adds or removes a specified amount. Ex. 100 adds $100 and -100 reduces by $100. Not implemented yet.
-        pass
+        # Adds or removes a specified amount. Ex. 100 adds $100 while -100 reduces by $100. Not implemented yet.
+        # TODO: need to have code check for 0 value.
+        changed = self.extractItemsInList(
+            stock, self.findStock, self.setAmount, amount=float(amount), typ="add"
+        )
+        self.writeStockInfo(changed)
+        return
 
     def multiplyAmount(self, amount, stock):
         # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%. Not implemented yet.
-        pass
+        changed = self.extractItemsInList(
+            stock, self.findStock, self.setAmount, amount=float(amount), typ="multiply"
+        )
+        self.writeStockInfo(changed)
+        return
+
+    def setAmount(self, stock, amount, typ):
+        client = getKeys(
+            "paperTrading" if stock["account"] != "real" else "realTrading"
+        )
+        client = TradingClient(**client)
+        if self.write:
+            # TODO Need to get $ amount of stocks holding from Alpaca.
+            # stock["amount"] +=
+            pass
+        if typ == "multiply":
+            stock["amount"] = stock["amount"] * amount
+        elif typ == "add":
+            stock["amount"] = stock["amount"] + amount
+        else:
+            raise Exception(f"setAmount received wrong type: {typ}")
+        logging.info(f"Offset amount: {stock} {stock['amount']}")
+        return stock["amount"]
 
 
 if __name__ == "__main__":

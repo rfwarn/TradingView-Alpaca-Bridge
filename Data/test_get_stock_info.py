@@ -118,7 +118,29 @@ def test_setOverrideMax2():
 
 
 def test_stock_sysargs():
+    # verify no errors when passing an argument in
     main(["-m"])
+
+
+def test_stock_multiply():
+    # test to make sure stock amount is adjusted correctly
+    stockUpdater.stockSplitter("NVDA")
+    stockUpdater.setStockAmount("2000", "NVDA")
+    main(["-ma", "1", "NVDA"])
+    stockUpdater.multiplyAmount("1.2", "NVDA")
+    assert stockUpdater.stocklist[2]["symbol"] == "NVDA"
+    assert stockUpdater.stocklist[2]["amount"] == 2400
+
+
+def test_stock_offset():
+    # test to make sure stock amount is adjusted correctly
+    stockUpdater.stockSplitter("NVDA")
+    main(["-oa", "0", "NVDA"])
+    stockUpdater.setStockAmount("2000", "NVDA")
+    stockUpdater.offsetAmount("300", "NVDA")
+    assert stockUpdater.stocklist[2]["amount"] == 2300
+    stockUpdater.offsetAmount("-300", "NVDA")
+    assert stockUpdater.stocklist[2]["amount"] == 2000
 
 
 # if __name__ == "__main__":
