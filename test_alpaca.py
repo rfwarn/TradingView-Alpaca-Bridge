@@ -228,6 +228,7 @@ class TestAlpaca(unittest.TestCase):
         result.setBalance()
 
     def test_createLimitOrder(self):
+        # Note: will fail if holding FCEL in paper account.
         result = AutomatedTrader(
             paperTrading,
             req=marketLDC["OpenFCEL"],
@@ -250,6 +251,7 @@ class TestAlpaca(unittest.TestCase):
         self.assertEqual(result.order_data.symbol, "FCEL")
 
     def test_createMarketOrder(self):
+        # Note: will fail if holding FCEL in paper account.
         result = AutomatedTrader(
             paperTrading,
             req=marketLDC["OpenFCEL"],
