@@ -1,9 +1,11 @@
 from dotenv import load_dotenv
 import os
+
 try:
     from Keys.getSecureKeys import get_secret
 except ModuleNotFoundError:
     pass
+
 
 def getKeys(account):
     """Retrives the keys for either the "paperTrading" or "realTrading" account.
@@ -14,7 +16,7 @@ def getKeys(account):
         "paper": True,
     }"""
     load_dotenv(override=True)
-    
+
     def getSecureKeys():
         # Try to get secure keys if they exist.
         try:
@@ -25,7 +27,7 @@ def getKeys(account):
         # for key, value in keys.items():
         #     os.environ[key] = value
         return keys
-    
+
     # Get the API keys from the environment variables. These are for Paper keys. Below are keys for real trading in Alpaca
     keys = {}
     if account == "paperTrading":
@@ -33,11 +35,11 @@ def getKeys(account):
         if not os.environ.get("Alpaca_API_KEY"):
             keys = getSecureKeys()
         else:
-            keys['Alpaca_API_KEY'] = os.environ.get("Alpaca_API_KEY")
-            keys['Alpaca_SECRET_KEY'] = os.environ.get("Alpaca_SECRET_KEY")
+            keys["Alpaca_API_KEY"] = os.environ.get("Alpaca_API_KEY")
+            keys["Alpaca_SECRET_KEY"] = os.environ.get("Alpaca_SECRET_KEY")
         paperTrading = {
-            "api_key": keys['Alpaca_API_KEY'],
-            "secret_key": keys['Alpaca_SECRET_KEY'],
+            "api_key": keys["Alpaca_API_KEY"],
+            "secret_key": keys["Alpaca_SECRET_KEY"],
             "paper": True,
         }
         account = paperTrading
@@ -46,8 +48,8 @@ def getKeys(account):
         if not os.environ.get("Alpaca_API_KEY-real"):
             keys = getSecureKeys()
         else:
-            keys['Alpaca_API_KEY-real'] = os.environ.get("Alpaca_API_KEY-real")
-            keys['Alpaca_SECRET_KEY-real'] = os.environ.get("Alpaca_SECRET_KEY-real")
+            keys["Alpaca_API_KEY-real"] = os.environ.get("Alpaca_API_KEY-real")
+            keys["Alpaca_SECRET_KEY-real"] = os.environ.get("Alpaca_SECRET_KEY-real")
         realTrading = {
             "api_key": keys["Alpaca_API_KEY-real"],
             "secret_key": keys["Alpaca_SECRET_KEY-real"],
@@ -60,5 +62,6 @@ def getKeys(account):
         )
     return account
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     getKeys("paperTrading")
