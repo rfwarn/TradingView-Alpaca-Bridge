@@ -11,6 +11,7 @@ import ast
 import argparse
 import logging
 from alpaca.trading.client import TradingClient
+from alpaca.common.exceptions import APIError
 from filelock import FileLock, Timeout
 
 # Get parent directory
@@ -33,7 +34,7 @@ logging.basicConfig(
     filename=conv_log,
     filemode="a",
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.DEBUG,
 )
 
 fullList = filename("stocks")
@@ -423,10 +424,10 @@ class StockUpdater:
             temp = callback(itm)
             if not temp:
                 print(f"{itm} not in stocks.json. Add it first with the -a command")
-                return False
+                return
             callback2(temp, **args)
             changed = True
-            return True
+            return
 
         changed = False
         if isinstance(data, list):
@@ -499,17 +500,19 @@ class StockUpdater:
         logging.info(f"Override set: {stock} {override}")
         self.writeStockInfo()
 
-    def offsetAmount(self, amount, stock):
-        # Adds or removes a specified amount. Ex. 100 adds $100 while -100 reduces by $100. Not implemented yet.
-        # TODO: need to have code check for 0 value.
+    def offsetAmount(self, amount: float, stock):
+        # Adds or removes a specified amount. Ex. 100 adds $100 while -100 reduces by $100. 
+        # Stock preference amount must not be 0.
         changed = self.extractItemsInList(
             stock, self.findStock, self.setAmount, amount=float(amount), typ="add"
         )
         self.writeStockInfo(changed)
         return
 
-    def multiplyAmount(self, amount, stock):
-        # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%. Not implemented yet.
+    def multiplyAmount(self, amount: float, stock):
+        # Multiplies a specified amount. Ex. 1.1 to increase by 10% and .9 to decrease by 10%.
+        # Accounts for market value of open positions.
+        # Stock preference amount must not be 0.
         changed = self.extractItemsInList(
             stock, self.findStock, self.setAmount, amount=float(amount), typ="multiply"
         )
@@ -517,21 +520,36 @@ class StockUpdater:
         return
 
     def setAmount(self, stock, amount, typ):
-        client = getKeys(
-            "paperTrading" if stock["account"] != "real" else "realTrading"
-        )
-        client = TradingClient(**client)
-        if self.write:
-            # TODO Need to get $ amount of stocks holding from Alpaca.
-            # stock["amount"] +=
-            pass
-        if typ == "multiply":
-            stock["amount"] = stock["amount"] * amount
+        # Function for offsetting and multiplying amount. Multiplying adds open positions to the remaining amount for calculation.
+        # If 0 value in stock amount preference, value will not change as that's set to disabled.
+        if stock["amount"] == 0:
+            msg = f"Amount is 0. Disabled for {stock['symbol']}."
+            logging.info(msg)
+            print(msg)
+            return 0
+        elif typ == "multiply":
+            client = getKeys(
+                "paperTrading" if stock["account"] != "real" else "realTrading"
+            )
+            client = TradingClient(**client)
+            try:
+                # If holding a position, add the value to the amount before multiplying it then remove it.
+                stock_pos = float(
+                    client.get_open_position(stock["symbol"]).market_value
+                )
+                stock["amount"] += stock_pos
+                stock["amount"] *= round(amount, 2)
+                stock["amount"] -= stock_pos
+            except APIError as e:
+                if e.code != 40410000:
+                    raise
+                stock["amount"] *= amount
+            logging.info(f"Multiply amount: {stock['symbol']} {stock['amount']}")
         elif typ == "add":
-            stock["amount"] = stock["amount"] + amount
+            stock["amount"] += amount
+            logging.info(f"Offset amount: {stock['symbol']} {stock['amount']}")
         else:
             raise Exception(f"setAmount received wrong type: {typ}")
-        logging.info(f"Offset amount: {stock} {stock['amount']}")
         return stock["amount"]
 
 
