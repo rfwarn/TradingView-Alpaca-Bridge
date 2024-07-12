@@ -772,7 +772,7 @@ class AutomatedTrader:
 if __name__ == "__main__":
     # Display general account info.
     acctInfo()
-    # Start the app
+    # Start the app with one thread to avoid overwriting preference file through get_stock_info.
     threads = 1
     try:
         if sys.argv[1] == "serveTV":
