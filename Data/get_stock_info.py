@@ -117,7 +117,7 @@ def main(args=None):
     parser.add_argument(
         "-ma",
         "--multiply_amount",
-        help="Multiplies a stock(s) by a dollar value. (ex. 100 MSFT, -100 MSFT)",
+        help="Multiplies a stock(s) by a dollar value. (ex. '1.1 MSFT' +10%, '0.9 MSFT' -10%)",
         nargs=2,
     )
 
