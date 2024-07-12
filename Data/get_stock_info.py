@@ -34,7 +34,7 @@ logging.basicConfig(
     filename=conv_log,
     filemode="a",
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 
 fullList = filename("stocks")
