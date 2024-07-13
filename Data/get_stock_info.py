@@ -51,6 +51,8 @@ lock = FileLock(lockfile)
 
 def getListOrString(arg1):
     # Detmine if argument is string or list
+    if isinstance(arg1, list):
+        arg1 = arg1[0]
     try:
         inputList = ast.literal_eval(arg1)
         inputList = [stock.strip().upper() for stock in inputList]
@@ -59,14 +61,23 @@ def getListOrString(arg1):
             inputList = arg1.split(",")
             inputList = [stock.strip().upper() for stock in inputList]
         elif isinstance(arg1, list):
-            inputList = arg1
+            if len(arg1) == 0:
+                print("Empty list entered")
+                return
+            elif isinstance(arg1[0], list):
+                inputList = [item for sublist in arg1 for item in sublist]
+                inputList = [stock.strip().upper() for stock in inputList]
+            else:
+                inputList = arg1
             return inputList
-        else:
+        elif isinstance(arg1, str):
             inputList = arg1.strip().upper()
+        else:
+            raise ValueError("Invalid input type")
     return inputList
 
 
-def main(args=None):
+def main(args=None, **kwargs):
     # create an argument parser
     parser = argparse.ArgumentParser(
         prog="Get stock info",
@@ -129,7 +140,7 @@ def main(args=None):
         print(e)
 
     # Allows for adding, removing, and setting of stock preferences for account (paper/real)
-    manualStock = StockUpdater()
+    manualStock = StockUpdater(**kwargs)
     manualStock.getStockList()
     newArgs = ""
     if args.add:
@@ -167,7 +178,7 @@ def main(args=None):
         # Print the list of stocks account preferences if no arguments are given.
         # manualStock.getStockList()
         manualStock.printAccountPreference()
-
+    return manualStock
 
 class StockUpdater:
     """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it will overwrite the saved list (stocks.json)."""
@@ -175,6 +186,8 @@ class StockUpdater:
     def __init__(self, stocklist=[], write=True, testfile=""):
         # By default, stocks from the main list should be passed in.
         self.stocklist = stocklist
+        # Dict stocklist - For future use.
+        self.stocklist_dict = {}
         # self.debug = True
         self.debug = False
         # For testing. Not implemented yet.
@@ -205,6 +218,14 @@ class StockUpdater:
         lock.release()
         if self.debug:
             print("release called, file released if lock acquired was successful.")
+
+    def conv_list2dict(self, data):
+        # Converts a list of dictionaries to a dictionary of dictionaries.
+        result = {}
+        for item in data:
+            key = item["symbol"]
+            result[key] = item
+        return result
 
     def getStockList(self):
         # Gets the list from the stocks.json file and loads them into stocklist.
@@ -501,7 +522,7 @@ class StockUpdater:
         self.writeStockInfo()
 
     def offsetAmount(self, amount: float, stock):
-        # Adds or removes a specified amount. Ex. 100 adds $100 while -100 reduces by $100. 
+        # Adds or removes a specified amount. Ex. 100 adds $100 while -100 reduces by $100.
         # Stock preference amount must not be 0.
         changed = self.extractItemsInList(
             stock, self.findStock, self.setAmount, amount=float(amount), typ="add"

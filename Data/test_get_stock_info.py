@@ -15,6 +15,7 @@ def test_get_stock_info():
 
 def test_add_stock_single():
     # global SL
+    main(["-a", "msft"])
     newArgs = getListOrString("msft")
     SL = stockUpdater.stockSplitter(newArgs)
     assert SL[0]["account"] == ""
@@ -125,11 +126,15 @@ def test_stock_sysargs():
 def test_stock_multiply():
     # test to make sure stock amount is adjusted correctly
     stock = "NVDA"
+    # stocklist = '["NVDA", "JPM"]'
+    stocklist = '"NVDA", "JPM"'
     # stock = "FCEL"
     stockUpdater.stocklist = []
+    temp = main(["-a", stocklist], write=False)
     stockUpdater.stockSplitter(stock)
     stockUpdater.setStockAmount("2000", stock)
     main(["-ma", "1", stock])
+    main(["-ma", "1", stocklist])
     stockUpdater.multiplyAmount("1.2", stock)
     assert stockUpdater.stocklist[0]["symbol"] == stock
     assert stockUpdater.stocklist[0]["amount"] == 2400
@@ -139,9 +144,11 @@ def test_stock_offset():
     # test to make sure stock amount is adjusted correctly
     # stock = "NVDA"
     stock = "FCEL"
+    stocklist = '["NVDA", "JPM"]'
     stockUpdater.stocklist = []
     stockUpdater.stockSplitter(stock)
     main(["-oa", "3", stock])
+    # main(["-oa", "3", stocklist])
     stockUpdater.setStockAmount("2000", stock)
     stockUpdater.offsetAmount("300", stock)
     assert stockUpdater.stocklist[0]["amount"] == 2300
