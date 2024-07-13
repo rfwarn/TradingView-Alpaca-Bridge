@@ -118,7 +118,6 @@ def main(args=None):
         "-ma",
         "--multiply_amount",
         help="Multiplies a stock(s) by a dollar value. (ex. '1.1 MSFT' +10%%, '0.9 MSFT' -10%%)",
-        # help="Multiplies a stock(s) by a dollar value. (ex. 1.1 MSFT, 0.9 MSFT)",
         nargs=2,
     )
 
