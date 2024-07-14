@@ -38,6 +38,14 @@ def test_get_list_or_string():
     assert type(newArgs) is list
     assert newArgs[0] == "GOOG"
     assert len(newArgs) == 2
+    assert type(newArgs) is list
+    assert newArgs[0] == "GOOG"
+    assert len(newArgs) == 2
+    long = "[AAPL,'fcel','NVDA','Msft','jpm']"
+    newArgs = getListOrString(long)
+    assert newArgs[0] == "AAPL"
+    assert newArgs[-1] == "JPM"
+    assert len(newArgs) == 5
 
 
 def test_add_stock_single():
@@ -207,7 +215,8 @@ def test_stock_offset():
     main(["-a", stock], write=False, loadSL=False)
     main(["-sm", "222", stock], write=False, loadSL=False)
     temp = main(["-oa", "3", stock], write=False, loadSL=False)
-    assert temp.stocklist[0]["amount"] == 225
+    temp.conv_list2dict()
+    assert temp.stocklist_dict[stock]["amount"] == 225
     # stocklist = '["NVDA", "JPM"]'
     # main(["-oa", "3", stocklist])
 

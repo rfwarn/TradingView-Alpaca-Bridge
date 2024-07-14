@@ -10,6 +10,7 @@ import json
 import ast
 import argparse
 import logging
+import re
 from alpaca.trading.client import TradingClient
 from alpaca.common.exceptions import APIError
 from filelock import FileLock, Timeout
@@ -58,7 +59,8 @@ def getListOrString(arg1):
         inputList = [stock.strip().upper() for stock in inputList]
     except ValueError:
         if "," in arg1:
-            inputList = arg1.split(",")
+            inputList = re.findall("[a-zA-Z0-9]+", arg1)
+            # inputList = arg1.split(",")
             inputList = [stock.strip().upper() for stock in inputList]
         elif isinstance(arg1, list):
             if len(arg1) == 0:
