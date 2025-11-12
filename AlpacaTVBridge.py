@@ -49,17 +49,6 @@ accountPaper = getKeys("paperTrading")
 # stockUpdater = StockUpdater()
 # stocks = stockUpdater.getStockList()
 
-# Clear lock file if it exists. This is for edge cases if the program is stopped before the lock is
-# released (primarily when debugging) and the file isn't deleted before running it again preventing
-# future access.
-try:
-    path = os.path.dirname(__file__)
-    lockfile = os.path.join(path + os.sep + "Data" + os.sep + "stocks.json.lock")
-    os.remove(lockfile)
-except FileNotFoundError:
-    pass
-
-
 # Load settings
 def loadSettings(paper, real, using):
     settings = paper.copy()

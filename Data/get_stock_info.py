@@ -1,6 +1,6 @@
-""" Retrieves stock information (like if it accepts fractional trades) for quick reference and stores it in stocks.json.
+""" Retrieves stock information (like if it accepts fractional trades) for quick reference and stores it in SQLite database.
 Set or clear stock account preference. When enabled in the settings, this allows for stocks to be selectively bought and
-sold on either rea or paper accounts. Clearing will default to what the settings "using" is set to. Entered as an arguement
+sold on either real or paper accounts. Clearing will default to what the settings "using" is set to. Entered as an arguement
 individually (get_stock_info.py -a ex1) in the terminal or as a list (get_stock_info.py -a 'ex1, ex2, etc...')."""
 
 import requests
@@ -13,7 +13,6 @@ import logging
 import re
 from alpaca.trading.client import TradingClient
 from alpaca.common.exceptions import APIError
-from filelock import FileLock, Timeout
 
 # Get parent directory
 path = os.path.dirname(__file__)
@@ -24,11 +23,7 @@ sys.path.append(parent)
 conv_log = path + os.sep + "stock_info.log"
 
 from getKeys import getKeys
-
-
-def filename(name):
-    return os.path.join(path + os.sep + name + ".json")
-
+from Data import sql
 
 # Logging
 logging.basicConfig(
@@ -38,16 +33,8 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-fullList = filename("stocks")
-
-# Check to see if the file exists and if not create it with a blank list.
-if not os.path.isfile(fullList):
-    f = open(fullList, "x")
-    f.write("[]")
-
-# file and lock to prevent potential errors
-lockfile = f"{fullList}.lock"
-lock = FileLock(lockfile)
+# Initialize database
+sql.init_DB()
 
 
 def getListOrString(arg1):
@@ -184,7 +171,7 @@ def main(args=None, **kwargs):
 
 
 class StockUpdater:
-    """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it will overwrite the saved list (stocks.json)."""
+    """Takes in a stock list as a list and write as a boolean. Set write to false for testing purposes otherwise it won't save changes to the database."""
 
     def __init__(self, stocklist=[], write=True, testfile="", loadSL=True):
         # By default, stocks from the main list should be passed in.
@@ -195,35 +182,12 @@ class StockUpdater:
         self.debug = False
         # For testing. Not implemented yet.
         if testfile != "":
-            self.testfile = os.path.join(path + os.sep + testfile + ".json")
+            self.testfile = testfile
         # Added for testing purposes so it doesn't make changes.
         self.write = write
         # Load the main list if true.
         if loadSL:
             self.getStockList()
-
-    def __del__(self):
-        lock.release()
-        if self.debug:
-            print("Destructor called, file released if lock acquired was successful.")
-
-    def lockFile(self):
-        if self.write:
-            seconds = 4
-            try:
-                lock.acquire(timeout=seconds)
-                if self.debug:
-                    print("file locked")
-            except Timeout:
-                # lock.release()
-                raise Timeout(
-                    f"Time exceeded {seconds} seconds. Another process may be locking the file."
-                )
-
-    def releaseFile(self):
-        lock.release()
-        if self.debug:
-            print("release called, file released if lock acquired was successful.")
 
     def conv_list2dict(self):
         # Converts a list of dictionaries to a dictionary of dictionaries.
@@ -235,18 +199,14 @@ class StockUpdater:
         return result
 
     def getStockList(self):
-        # Gets the list from the stocks.json file and loads them into stocklist.
-        self.lockFile()
-        with open(fullList, "r") as f:
-            stocks = json.load(f)
+        # Gets the list from the database and loads them into stocklist.
+        stocks = sql.get_all_stocks()
         self.stocklist = stocks
         return stocks
 
     def getStockListIndividual(self):
-        # Gets the list from the the individual stock file and loads them into stocklist if they exist.
-        self.lockFile()
-        with open(fullList, "r") as f:
-            stocks = json.load(f)
+        # Gets the list from the database and loads them into stocklist if they exist.
+        stocks = sql.get_all_stocks()
         self.stocklist = stocks
         return stocks
 
@@ -301,20 +261,45 @@ class StockUpdater:
         # Adds or updates one asset at a time. Adds account key to asset dictionary for user account preference
         # ("paper", "real"). Also updates the asset data if there are changes.
         print(f"Adding stock: {asset['symbol']}")
+
+        # Check if stock exists in database
+        existing_stock = sql.get_stock(asset['symbol'])
+
+        # Preserve existing preferences if stock already exists
+        account = existing_stock.get('account', '') if existing_stock else ''
+        amount = existing_stock.get('amount', 0) if existing_stock else 0
+        override = existing_stock.get('override', False) if existing_stock else False
+
+        # Add or update stock in database
+        if self.write:
+            # Separate core fields from Alpaca data
+            name = asset.get('name', '')
+            alpaca_data = {k: v for k, v in asset.items() if k not in ['symbol', 'name', 'account', 'amount', 'override']}
+
+            sql.add_stock(
+                symbol=asset['symbol'],
+                name=name,
+                account=account,
+                amount=amount,
+                override=override,
+                alpaca_data=alpaca_data
+            )
+
+        # Update in-memory list
         for n, stock in enumerate(self.stocklist):
             if asset["symbol"] == stock["symbol"]:
-                if not "account" in stock:
-                    self.stocklist[n]["account"] = ""
-                if not "amount" in stock:
-                    self.stocklist[n]["amount"] = 0
-                if not "override" in stock:
-                    self.stocklist[n]["override"] = False
                 self.stocklist[n].update(asset)
+                if 'account' not in self.stocklist[n]:
+                    self.stocklist[n]["account"] = account
+                if 'amount' not in self.stocklist[n]:
+                    self.stocklist[n]["amount"] = amount
+                if 'override' not in self.stocklist[n]:
+                    self.stocklist[n]["override"] = override
                 break
         else:
-            asset["account"] = ""
-            asset["amount"] = 0
-            asset["override"] = False
+            asset["account"] = account
+            asset["amount"] = amount
+            asset["override"] = override
             self.stocklist.append(asset)
         return
 
@@ -359,6 +344,12 @@ class StockUpdater:
             asset = asset.upper()
             print(f"Removing stock: {asset}")
             logging.info(f"Removed stock: {asset}")
+
+            # Remove from database
+            if self.write:
+                sql.remove_stock(asset)
+
+            # Remove from in-memory list
             for n, stock in enumerate(self.stocklist):
                 if asset.upper() == stock["symbol"]:
                     self.stocklist.pop(n)
@@ -380,20 +371,12 @@ class StockUpdater:
         if not changed:
             print("No changes to write")
         elif self.write:
-            try:
-                # with lock.acquire(timeout=2):
-                with open(fullList, "w+") as f:
-                    json.dump(self.stocklist, f, indent=4)
-            # except Timeout:
-            #     lock.release()
-            #     raise Timeout(f'Time exceeded {seconds} seconds')
-            finally:
-                # lock.release()
-                if self.debug:
-                    print("finished writing")
+            # Database writes happen in real-time now, so just refresh in-memory list
+            self.getStockList()
+            if self.debug:
+                print("finished writing")
         else:
             print("Write not enabled")
-        self.releaseFile()
 
     def accountDetails(self, *args):
         if self.stocklist == []:
@@ -481,6 +464,10 @@ class StockUpdater:
             nonlocal changed
             stockPref = self.findStock(stock)
             if stockPref:
+                # Update in database
+                if self.write:
+                    sql.update_stock_account(stock, pref)
+                # Update in-memory
                 stockPref["account"] = pref
                 printPrefChange(stock, pref)
                 changed = True
@@ -508,8 +495,10 @@ class StockUpdater:
     def setStockAmount(self, amount, stock):
         # Sets a specific stock amount to buy and sell which will grow or shrink with the asset.
         def setAmount(stock, amount):
-            # stock["amount"] = amount["amount"]
             stock["amount"] = amount
+            # Update in database
+            if self.write:
+                sql.update_stock_amount(stock["symbol"], amount)
 
         self.extractItemsInList(stock, self.findStock, setAmount, amount=float(amount))
         logging.info(f"Amount set: {stock} {amount}")
@@ -519,6 +508,9 @@ class StockUpdater:
         # Enables overriding of maxpositions if set >0. Not implemented yet. Default is False.
         def setOverride(stock, override):
             stock["override"] = override
+            # Update in database
+            if self.write:
+                sql.update_stock_override(stock["symbol"], override)
 
         if override.lower() == "True".lower():
             override = True
@@ -584,6 +576,11 @@ class StockUpdater:
             logging.info(f"Offset amount: {stock['symbol']} {stock['amount']}")
         else:
             raise Exception(f"setAmount received wrong type: {typ}")
+
+        # Update in database
+        if self.write:
+            sql.update_stock_amount(stock["symbol"], stock["amount"])
+
         return stock["amount"]
 
 
